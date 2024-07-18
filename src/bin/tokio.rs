@@ -1,45 +1,51 @@
+use bytes::Bytes;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+
+use tokio::net::TcpListener;
+
 use mini_redis::{Connection, Frame};
-use tokio::net::{TcpListener, TcpStream};
+use tokio::net::TcpStream;
+
+type Db = Arc<Mutex<HashMap<String, Bytes>>>;
 
 #[tokio::main]
 async fn main() {
-    // リスナーをこのアドレスにバインドする
     let listener = TcpListener::bind("127.0.0.1:6379").await.unwrap();
+
+    println!("Listening");
+
+    let db = Arc::new(Mutex::new(HashMap::new()));
 
     loop {
         let (socket, _) = listener.accept().await.unwrap();
-        // それぞれのインバウンドソケットに対して新しいタスクを spawn する
-        // ソケットは新しいタスクに move され、そこで処理される
+        // ハッシュマップへのハンドルを複製する
+        let db = db.clone();
+
+        println!("Accepted");
         tokio::spawn(async move {
-            process(socket).await;
+            process(socket, db).await;
         });
     }
 }
 
-async fn process(socket: TcpStream) {
+async fn process(socket: TcpStream, db: Db) {
     use mini_redis::Command::{self, Get, Set};
-    use std::collections::HashMap;
-
-    // データを蓄えるため `HashMap` を使う
-    let mut db = HashMap::new();
 
     // `mini-redis` が提供するコネクションによって、ソケットから来るフレームをパースする
     let mut connection = Connection::new(socket);
 
-    // コネクションからコマンドを受け取るため `read_frame` を使う
     while let Some(frame) = connection.read_frame().await.unwrap() {
         let response = match Command::from_frame(frame).unwrap() {
             Set(cmd) => {
-                // `Vec<u8> として保存する
-                db.insert(cmd.key().to_string(), cmd.value().to_vec());
+                let mut db = db.lock().unwrap();
+                db.insert(cmd.key().to_string(), cmd.value().clone());
                 Frame::Simple("OK".to_string())
             }
             Get(cmd) => {
+                let db = db.lock().unwrap();
                 if let Some(value) = db.get(cmd.key()) {
-                    // `Frame::Bulk` はデータが Bytes` 型であることを期待する
-                    // この型についてはのちほど解説する
-                    // とりあえずここでは `.into()` を使って `&Vec<u8>` から `Bytes` に変換する
-                    Frame::Bulk(value.clone().into())
+                    Frame::Bulk(value.clone())
                 } else {
                     Frame::Null
                 }
