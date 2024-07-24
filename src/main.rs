@@ -7,7 +7,6 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::env;
-use std::net::SocketAddr;
 
 #[tokio::main]
 async fn main() {
@@ -19,15 +18,15 @@ async fn main() {
     let app = create_app();
 
     // axum 0.4.8
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
+    // let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    // axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
 
     // axum 0.7.5
-    // let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-    //     .await
-    //     .unwrap();
-    // tracing::debug!("listening on {:?}", listener);
-    // axum::serve(listener, app).await.unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+        .await
+        .unwrap();
+    tracing::debug!("listening on {:?}", listener);
+    axum::serve(listener, app).await.unwrap();
 }
 
 fn create_app() -> Router {
@@ -64,9 +63,11 @@ struct User {
 
 #[cfg(test)]
 mod test {
+    use std::usize;
     use super::*;
     use axum::{
         body::Body,
+        body::to_bytes,
         http::{header, Method, Request},
     };
     use tower::ServiceExt;
@@ -75,7 +76,9 @@ mod test {
     async fn should_return_hello_world() {
         let req = Request::builder().uri("/").body(Body::empty()).unwrap();
         let res = create_app().oneshot(req).await.unwrap();
-        let bytes = hyper::body::to_bytes(res.into_body()).await.unwrap();
+        // axum 0.4.8, hyper 0.14.16
+        // let bytes = hyper::body::to_bytes(res.into_body()).await.unwrap();
+        let bytes = to_bytes(res.into_body(), usize::MAX).await.unwrap();
         let body: String = String::from_utf8(bytes.to_vec()).unwrap();
         assert_eq!(body, "Hello, World!")
     }
@@ -84,7 +87,9 @@ mod test {
     async fn should_return_user_data() {
         let req = Request::builder().uri("/users").method(Method::POST).header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref()).body(Body::from(r#"{ "username": "taro" }"#)).unwrap();
         let res = create_app().oneshot(req).await.unwrap();
-        let bytes = hyper::body::to_bytes(res.into_body()).await.unwrap();
+        // axum 0.4.8, hyper 0.14.16
+        // let bytes = hyper::body::to_bytes(res.into_body()).await.unwrap();
+        let bytes = to_bytes(res.into_body(), usize::MAX).await.unwrap();
         let body: String = String::from_utf8(bytes.to_vec()).unwrap();
         let user: User = serde_json::from_str(&body).expect("cannot convert User instance");
         assert_eq!(user, User {
