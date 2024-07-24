@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::env;
+use std::net::SocketAddr;
 
 #[tokio::main]
 async fn main() {
@@ -18,15 +19,15 @@ async fn main() {
     let app = create_app();
 
     // axum 0.4.8
-    // let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    // axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
 
     // axum 0.7.5
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-        .await
-        .unwrap();
-    tracing::debug!("listening on {:?}", listener);
-    axum::serve(listener, app).await.unwrap();
+    // let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+    //     .await
+    //     .unwrap();
+    // tracing::debug!("listening on {:?}", listener);
+    // axum::serve(listener, app).await.unwrap();
 }
 
 fn create_app() -> Router {
@@ -36,7 +37,7 @@ fn create_app() -> Router {
 }
 
 async fn root() -> &'static str {
-    "Hello, world!"
+    "Hello, World!"
 }
 
 async fn create_user(
