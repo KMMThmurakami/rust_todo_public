@@ -78,6 +78,7 @@ mod test {
         let res = create_app().oneshot(req).await.unwrap();
         // axum 0.4.8, hyper 0.14.16
         // let bytes = hyper::body::to_bytes(res.into_body()).await.unwrap();
+        // axum 0.7.5, hyper 1.4.1
         let bytes = to_bytes(res.into_body(), usize::MAX).await.unwrap();
         let body: String = String::from_utf8(bytes.to_vec()).unwrap();
         assert_eq!(body, "Hello, World!")
@@ -89,6 +90,7 @@ mod test {
         let res = create_app().oneshot(req).await.unwrap();
         // axum 0.4.8, hyper 0.14.16
         // let bytes = hyper::body::to_bytes(res.into_body()).await.unwrap();
+        // axum 0.7.5, hyper 1.4.1
         let bytes = to_bytes(res.into_body(), usize::MAX).await.unwrap();
         let body: String = String::from_utf8(bytes.to_vec()).unwrap();
         let user: User = serde_json::from_str(&body).expect("cannot convert User instance");
