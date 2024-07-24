@@ -1,8 +1,15 @@
 use axum::{
-    http::StatusCode, response::IntoResponse, routing::{get, post}, Extension, Json, Router,
+    http::StatusCode,
+    response::IntoResponse,
+    routing::{get, post},
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, env, sync::{Arc, RwLock}};
+use std::{
+    collections::HashMap,
+    env,
+    sync::{Arc, RwLock},
+};
 use thiserror::Error;
 
 #[tokio::main]
@@ -36,7 +43,7 @@ fn create_app<T: TodoRepository>(repository: T) -> Router {
 
 pub async fn create_todo<T: TodoRepository>(
     Json(payload): Json<CreateTodo>,
-    Extension(repository): Extension<Arc<T>>
+    Extension(repository): Extension<Arc<T>>,
 ) -> impl IntoResponse {
     let todo = repository.create(payload);
 
@@ -47,9 +54,7 @@ async fn root() -> &'static str {
     "Hello, World!"
 }
 
-async fn create_user(
-    Json(payload): Json<CreateUser>,
-) -> impl IntoResponse {
+async fn create_user(Json(payload): Json<CreateUser>) -> impl IntoResponse {
     let user = User {
         id: 1337,
         username: payload.username,
@@ -109,7 +114,7 @@ impl Todo {
         Self {
             id,
             text,
-            completed: false
+            completed: false,
         }
     }
 }
@@ -152,13 +157,13 @@ impl TodoRepository for TodoRepositoryForMemory {
 }
 #[cfg(test)]
 mod test {
-    use std::usize;
     use super::*;
     use axum::{
-        body::Body,
         body::to_bytes,
+        body::Body,
         http::{header, Method, Request},
     };
+    use std::usize;
     use tower::ServiceExt;
 
     #[tokio::test]
@@ -177,7 +182,12 @@ mod test {
     #[tokio::test]
     async fn should_return_user_data() {
         let repository = TodoRepositoryForMemory::new();
-        let req = Request::builder().uri("/users").method(Method::POST).header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref()).body(Body::from(r#"{ "username": "taro" }"#)).unwrap();
+        let req = Request::builder()
+            .uri("/users")
+            .method(Method::POST)
+            .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+            .body(Body::from(r#"{ "username": "taro" }"#))
+            .unwrap();
         let res = create_app(repository).oneshot(req).await.unwrap();
         // axum 0.4.8, hyper 0.14.16
         // let bytes = hyper::body::to_bytes(res.into_body()).await.unwrap();
@@ -185,9 +195,12 @@ mod test {
         let bytes = to_bytes(res.into_body(), usize::MAX).await.unwrap();
         let body: String = String::from_utf8(bytes.to_vec()).unwrap();
         let user: User = serde_json::from_str(&body).expect("cannot convert User instance");
-        assert_eq!(user, User {
-            id: 1337,
-            username: "taro".to_string(),
-        });
+        assert_eq!(
+            user,
+            User {
+                id: 1337,
+                username: "taro".to_string(),
+            }
+        );
     }
 }
