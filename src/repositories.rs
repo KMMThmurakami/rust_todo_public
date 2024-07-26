@@ -29,7 +29,7 @@ pub struct Todo {
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct CreateTodo {
-    text: String,
+    pub text: String,
 }
 
 #[cfg(test)]
@@ -41,7 +41,7 @@ impl CreateTodo {
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct UpdateTodo {
-    text: Option<String>,
+    pub text: Option<String>,
     completed: Option<bool>,
 }
 
