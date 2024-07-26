@@ -7,7 +7,7 @@ pub async fn create_todo<T: TodoRepository>(
     Json(payload): Json<CreateTodo>,
 ) -> impl IntoResponse {
     match payload.text.len() {
-        // TODO:BAD_REQUESTを送りたい
+        // returnを使う理由とinto_response()について調べる
         len if len <= 0 => return (StatusCode::BAD_REQUEST, "Error!: Can not be Empty".to_string()).into_response(),
         len if len > 100 => return (StatusCode::BAD_REQUEST, "Error!: Over text length".to_string()).into_response(),
         _ => {}
@@ -38,7 +38,7 @@ pub async fn update_todo<T: TodoRepository>(
 ) -> Result<impl IntoResponse, StatusCode> {
     let validation = payload.clone();
     match validation.text.as_deref().unwrap_or("").len() {
-        // TODO:BAD_REQUESTを送りたい
+        // returnを使う理由とinto_response()について調べる
         len if len <= 0 => return Ok((StatusCode::BAD_REQUEST, "Error!: Can not be Empty".to_string()).into_response()),
         len if len > 100 => return Ok((StatusCode::BAD_REQUEST, "Error!: Over text length".to_string()).into_response()),
         _ => {}
