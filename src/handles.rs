@@ -8,10 +8,12 @@ pub async fn create_todo<T: TodoRepository>(
 ) -> impl IntoResponse {
     match payload.text.len() {
         // TODO:BAD_REQUESTを送りたい
-        len if len <= 0 => panic!("Error!: Can not be Empty"),
-        len if len > 100 => panic!("Error!: Over text length"),
-        _ => (StatusCode::CREATED, Json(repository.create(payload)))
+        len if len <= 0 => return (StatusCode::BAD_REQUEST, "Error!: Can not be Empty".to_string()).into_response(),
+        len if len > 100 => return (StatusCode::BAD_REQUEST, "Error!: Over text length".to_string()).into_response(),
+        _ => {}
     }
+    let todo = repository.create(payload);
+    (StatusCode::CREATED, Json(todo)).into_response()
 }
 
 pub async fn find_todo<T: TodoRepository>(
@@ -25,8 +27,8 @@ pub async fn find_todo<T: TodoRepository>(
 pub async fn all_todo<T: TodoRepository>(
     Extension(repository): Extension<Arc<T>>,
 ) -> impl IntoResponse {
-    let todo = repository.all();
-    (StatusCode::OK, Json(todo))
+    let todos = repository.all();
+    (StatusCode::OK, Json(todos)).into_response()
 }
 
 pub async fn update_todo<T: TodoRepository>(
@@ -35,16 +37,16 @@ pub async fn update_todo<T: TodoRepository>(
     Json(payload): Json<UpdateTodo>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let validation = payload.clone();
-    match validation.text.unwrap().len() {
+    match validation.text.as_deref().unwrap_or("").len() {
         // TODO:BAD_REQUESTを送りたい
-        len if len <= 0 => panic!("Error!: Can not be Empty"),
-        len if len > 100 => panic!("Error!: Over text length"),
+        len if len <= 0 => return Ok((StatusCode::BAD_REQUEST, "Error!: Can not be Empty".to_string()).into_response()),
+        len if len > 100 => return Ok((StatusCode::BAD_REQUEST, "Error!: Over text length".to_string()).into_response()),
         _ => {}
     }
     let todo = repository
         .update(id, payload)
         .or(Err(StatusCode::NOT_FOUND))?;
-    Ok((StatusCode::CREATED, Json(todo)))
+    Ok((StatusCode::CREATED, Json(todo)).into_response())
 }
 
 pub async fn delete_todo<T: TodoRepository>(
