@@ -5,7 +5,6 @@ use std::{
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 use thiserror::Error;
-use validator::Validate;
 
 #[derive(Debug, Error)]
 enum RepositoryError {
@@ -28,10 +27,8 @@ pub struct Todo {
     completed: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Validate)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct CreateTodo {
-    #[validate(length(min = 1, message = "Can not be empty"))]
-    // #[validate(length(max = 100, message = "Over text length"))]
     text: String,
 }
 
@@ -42,10 +39,8 @@ impl CreateTodo {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Validate)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct UpdateTodo {
-    #[validate(length(min = 1, message = "Can not be empty"))]
-    // #[validate(length(max = 100, message = "Over text length"))]
     text: Option<String>,
     completed: Option<bool>,
 }
