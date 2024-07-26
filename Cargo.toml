@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.86"
 axum = "0.7.5"
+http-body = "1.0.1"
 hyper = { version = "1.4.1", features = ["full"] }
 mime = "0.3.17"
 serde = { version = "1.0.204", features = ["derive"] }
@@ -15,3 +16,4 @@ tokio = { version = "1", features = ["full"] }
 tower = "0.4.13"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+validator = { version = "0.18.1", features = ["derive"] }
