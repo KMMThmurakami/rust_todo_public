@@ -12,6 +12,7 @@ use std::{env, sync::Arc};
 #[tokio::main]
 async fn main() {
     // loggingの初期化
+    // RUST_LOG=debug cargo run
     let log_level = env::var("RUST_LOG").unwrap_or("info".to_string());
     env::set_var("RUST_LOG", log_level);
     tracing_subscriber::fmt::init();
