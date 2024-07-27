@@ -1,6 +1,8 @@
 use crate::repositories::{CreateTodo, TodoRepository, UpdateTodo};
-use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{async_trait, extract::{Path, FromRequest, FromRequestParts}, http::{StatusCode, request::Parts}, response::IntoResponse, Extension, Json};
 use std::sync::Arc;
+use serde::de::DeserializeOwned;
+use validator::Validate;
 
 const ERR_STR_EMPTY: &str = "Error!: Can not be Empty";
 const ERR_STR_OVER: &str = "Error!: Over text length";
@@ -68,4 +70,28 @@ pub async fn delete_todo<T: TodoRepository>(
     };
 
     response
+}
+
+#[derive(Debug)]
+pub struct ValidatedJson<T>(T);
+
+#[async_trait]
+impl<T, S> FromRequestParts<S> for ValidatedJson<T>
+where
+    T: DeserializeOwned + Validate,
+    S: Send + Sync,
+{
+    type Rejection = (StatusCode, String);
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let Json(value) = Json::<T>::from_request(parts, state).await.map_err(|rejection| {
+            let message = format!("Json parse error: [{}]", rejection);
+            (StatusCode::BAD_REQUEST, message)
+        })?;
+        value.validate().map_err(|rejection| {
+            let message = format!("Validation error: [{}]", rejection).replace('\n', ", ");
+            (StatusCode::BAD_REQUEST, message)
+        })?;
+        Ok(ValidatedJson(value))
+    }
 }
