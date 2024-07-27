@@ -10,13 +10,13 @@ pub async fn create_todo<T: TodoRepository>(
     Extension(repository): Extension<Arc<T>>,
     Json(payload): Json<CreateTodo>,
 ) -> impl IntoResponse {
-    let response = if payload.text.len() <= 0 {
-        (StatusCode::BAD_REQUEST, ERR_STR_EMPTY.to_string()).into_response()
-    } else if payload.text.len() > 100 {
-        (StatusCode::BAD_REQUEST, ERR_STR_OVER.to_string()).into_response()
-    } else {
-        let todo = repository.create(payload);
-        (StatusCode::CREATED, Json(todo)).into_response()
+    let response = match payload.text.len() {
+        len if len <= 0 => (StatusCode::BAD_REQUEST, ERR_STR_EMPTY.to_string()).into_response(),
+        len if len > 100 => (StatusCode::BAD_REQUEST, ERR_STR_OVER.to_string()).into_response(),
+        _ => {
+            let todo = repository.create(payload);
+            (StatusCode::CREATED, Json(todo)).into_response()
+        }
     };
 
     response
@@ -46,15 +46,13 @@ pub async fn update_todo<T: TodoRepository>(
     Path(id): Path<i32>,
     Json(payload): Json<UpdateTodo>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let response = if payload.text.as_deref().unwrap_or("").len() <= 0 {
-        (StatusCode::BAD_REQUEST, ERR_STR_EMPTY.to_string()).into_response()
-    } else if payload.text.as_deref().unwrap_or("").len() > 100 {
-        (StatusCode::BAD_REQUEST, ERR_STR_OVER.to_string()).into_response()
-    } else {
-        match repository.update(id, payload) {
+    let response = match payload.text.as_deref().unwrap_or("").len() {
+        len if len <= 0 => (StatusCode::BAD_REQUEST, ERR_STR_EMPTY.to_string()).into_response(),
+        len if len > 100 => (StatusCode::BAD_REQUEST, ERR_STR_OVER.to_string()).into_response(),
+        _ => match repository.update(id, payload) {
             Ok(todo) => (StatusCode::CREATED, Json(todo)).into_response(),
             Err(_) => (StatusCode::NOT_FOUND, ERR_STR_NOT_FOUND.to_string()).into_response(),
-        }
+        },
     };
 
     Ok(response)
@@ -64,10 +62,9 @@ pub async fn delete_todo<T: TodoRepository>(
     Path(id): Path<i32>,
     Extension(repository): Extension<Arc<T>>,
 ) -> StatusCode {
-    let response = if repository.delete(id).is_ok() {
-        StatusCode::NO_CONTENT
-    } else {
-        StatusCode::NOT_FOUND
+    let response = match repository.delete(id) {
+        Ok(_) => StatusCode::NO_CONTENT,
+        Err(_) => StatusCode::NOT_FOUND,
     };
 
     response
