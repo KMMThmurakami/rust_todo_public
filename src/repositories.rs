@@ -1,12 +1,12 @@
 use anyhow::Context;
 use axum::async_trait;
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 use thiserror::Error;
-use sqlx::PgPool;
 
 #[derive(Debug, Error)]
 enum RepositoryError {

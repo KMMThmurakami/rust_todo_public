@@ -14,7 +14,10 @@ pub async fn create_todo<T: TodoRepository>(
         len if len <= 0 => (StatusCode::BAD_REQUEST, ERR_STR_EMPTY.to_string()).into_response(),
         len if len > 100 => (StatusCode::BAD_REQUEST, ERR_STR_OVER.to_string()).into_response(),
         _ => {
-            let todo = repository.create(payload).await.or(Err(StatusCode::NOT_FOUND))?;
+            let todo = repository
+                .create(payload)
+                .await
+                .or(Err(StatusCode::NOT_FOUND))?;
             (StatusCode::CREATED, Json(todo)).into_response()
         }
     };
