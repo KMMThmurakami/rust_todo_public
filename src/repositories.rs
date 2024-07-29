@@ -6,6 +6,7 @@ use std::{
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 use thiserror::Error;
+use sqlx::PgPool;
 
 #[derive(Debug, Error)]
 enum RepositoryError {
@@ -122,6 +123,40 @@ impl TodoRepository for TodoRepositoryForMemory {
         let mut store = self.write_store_ref();
         store.remove(&id).ok_or(RepositoryError::NotFound(id))?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TodoRepositoryForDb {
+    pool: PgPool,
+}
+
+impl TodoRepositoryForDb {
+    pub fn new(pool: PgPool) -> Self {
+        TodoRepositoryForDb { pool }
+    }
+}
+
+#[async_trait]
+impl TodoRepository for TodoRepositoryForDb {
+    async fn create(&self, _payload: CreateTodo) -> anyhow::Result<Todo> {
+        todo!();
+    }
+
+    async fn find(&self, _id: i32) -> anyhow::Result<Todo> {
+        todo!();
+    }
+
+    async fn all(&self) -> anyhow::Result<Vec<Todo>> {
+        todo!();
+    }
+
+    async fn update(&self, _id: i32, _payload: UpdateTodo) -> anyhow::Result<Todo> {
+        todo!();
+    }
+
+    async fn delete(&self, _id: i32) -> anyhow::Result<()> {
+        todo!();
     }
 }
 
