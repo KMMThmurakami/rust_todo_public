@@ -2,31 +2,43 @@ use crate::repositories::{CreateTodo, TodoRepository, UpdateTodo};
 use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
 use std::sync::Arc;
 
+const ERR_STR_EMPTY: &str = "Error!: Can not be Empty";
+const ERR_STR_OVER: &str = "Error!: Over text length";
+const ERR_STR_NOT_FOUND: &str = "Todo not found";
+
 pub async fn create_todo<T: TodoRepository>(
     Extension(repository): Extension<Arc<T>>,
     Json(payload): Json<CreateTodo>,
 ) -> impl IntoResponse {
-    match payload.text.len() {
-        // TODO:BAD_REQUESTを送りたい
-        len if len <= 0 => panic!("Error!: Can not be Empty"),
-        len if len > 100 => panic!("Error!: Over text length"),
-        _ => (StatusCode::CREATED, Json(repository.create(payload)))
-    }
+    let response = match payload.text.len() {
+        len if len <= 0 => (StatusCode::BAD_REQUEST, ERR_STR_EMPTY.to_string()).into_response(),
+        len if len > 100 => (StatusCode::BAD_REQUEST, ERR_STR_OVER.to_string()).into_response(),
+        _ => {
+            let todo = repository.create(payload);
+            (StatusCode::CREATED, Json(todo)).into_response()
+        }
+    };
+
+    response
 }
 
 pub async fn find_todo<T: TodoRepository>(
     Path(id): Path<i32>,
     Extension(repository): Extension<Arc<T>>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let todo = repository.find(id).ok_or(StatusCode::NOT_FOUND)?;
-    Ok((StatusCode::OK, Json(todo)))
+    let response = match repository.find(id) {
+        Some(todo) => (StatusCode::OK, Json(todo)).into_response(),
+        None => (StatusCode::NOT_FOUND, ERR_STR_NOT_FOUND.to_string()).into_response(),
+    };
+
+    Ok(response)
 }
 
 pub async fn all_todo<T: TodoRepository>(
     Extension(repository): Extension<Arc<T>>,
 ) -> impl IntoResponse {
-    let todo = repository.all();
-    (StatusCode::OK, Json(todo))
+    let todos = repository.all();
+    (StatusCode::OK, Json(todos)).into_response()
 }
 
 pub async fn update_todo<T: TodoRepository>(
@@ -34,25 +46,26 @@ pub async fn update_todo<T: TodoRepository>(
     Path(id): Path<i32>,
     Json(payload): Json<UpdateTodo>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let validation = payload.clone();
-    match validation.text.unwrap().len() {
-        // TODO:BAD_REQUESTを送りたい
-        len if len <= 0 => panic!("Error!: Can not be Empty"),
-        len if len > 100 => panic!("Error!: Over text length"),
-        _ => {}
-    }
-    let todo = repository
-        .update(id, payload)
-        .or(Err(StatusCode::NOT_FOUND))?;
-    Ok((StatusCode::CREATED, Json(todo)))
+    let response = match payload.text.as_deref().unwrap_or("").len() {
+        len if len <= 0 => (StatusCode::BAD_REQUEST, ERR_STR_EMPTY.to_string()).into_response(),
+        len if len > 100 => (StatusCode::BAD_REQUEST, ERR_STR_OVER.to_string()).into_response(),
+        _ => match repository.update(id, payload) {
+            Ok(todo) => (StatusCode::CREATED, Json(todo)).into_response(),
+            Err(_) => (StatusCode::NOT_FOUND, ERR_STR_NOT_FOUND.to_string()).into_response(),
+        },
+    };
+
+    Ok(response)
 }
 
 pub async fn delete_todo<T: TodoRepository>(
     Path(id): Path<i32>,
     Extension(repository): Extension<Arc<T>>,
 ) -> StatusCode {
-    repository
-        .delete(id)
-        .map(|_| StatusCode::NO_CONTENT)
-        .unwrap_or(StatusCode::NOT_FOUND)
+    let response = match repository.delete(id) {
+        Ok(_) => StatusCode::NO_CONTENT,
+        Err(_) => StatusCode::NOT_FOUND,
+    };
+
+    response
 }
