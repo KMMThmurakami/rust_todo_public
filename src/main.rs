@@ -60,7 +60,7 @@ async fn root() -> &'static str {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::repositories::{CreateTodo, Todo, TodoRepositoryForMemory};
+    use crate::repositories::{test_utils::TodoRepositoryForMemory, CreateTodo, Todo};
     use axum::{
         body::{to_bytes, Body},
         http::{header, Method, Request, StatusCode},
