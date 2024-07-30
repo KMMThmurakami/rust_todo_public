@@ -10,6 +10,8 @@ use handles::{all_todo, create_todo, delete_todo, find_todo, update_todo};
 use repositories::{TodoRepository, TodoRepositoryForDb};
 use sqlx::PgPool;
 use std::{env, sync::Arc};
+use hyper::header::CONTENT_TYPE;
+use tower_http::cors::{Any, CorsLayer, AllowOrigin};
 
 #[tokio::main]
 async fn main() {
@@ -51,6 +53,12 @@ fn create_app<T: TodoRepository>(repository: T) -> Router {
                 .patch(update_todo::<T>),
         )
         .layer(Extension(Arc::new(repository)))
+        .layer(
+            CorsLayer::new()
+            .allow_origin(AllowOrigin::exact("http://127.0.0.1:3001".parse().unwrap()))
+            .allow_methods(Any)
+            .allow_headers(vec![CONTENT_TYPE]),
+        )
 }
 
 async fn root() -> &'static str {
