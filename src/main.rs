@@ -43,6 +43,16 @@ async fn main() {
 }
 
 fn create_app<T: TodoRepository>(repository: T) -> Router {
+    let allowed_origins = vec![
+        "http://localhost:3001".parse().unwrap(),
+        "http://127.0.0.1:3001".parse().unwrap(),
+    ];
+
+    let cors = CorsLayer::new()
+        .allow_origin(AllowOrigin::list(allowed_origins))
+        .allow_methods(Any)
+        .allow_headers(vec![CONTENT_TYPE]);
+
     Router::new()
         .route("/", get(root))
         .route("/todos", post(create_todo::<T>).get(all_todo::<T>))
@@ -53,12 +63,7 @@ fn create_app<T: TodoRepository>(repository: T) -> Router {
                 .patch(update_todo::<T>),
         )
         .layer(Extension(Arc::new(repository)))
-        .layer(
-            CorsLayer::new()
-            .allow_origin(AllowOrigin::exact("http://127.0.0.1:3001".parse().unwrap()))
-            .allow_methods(Any)
-            .allow_headers(vec![CONTENT_TYPE]),
-        )
+        .layer(cors)
 }
 
 async fn root() -> &'static str {
