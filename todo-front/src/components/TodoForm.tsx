@@ -37,7 +37,7 @@ const TodoForm: FC<Props> = ({ onSubmit }) => {
             sx={{
               mt: 2,
               display: "flex",
-              justifyContent: "right"
+              justifyContent: "right",
             }}
           >
             add todo

@@ -1,9 +1,10 @@
 import { useState, FC } from "react";
 import "modern-css-reset";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { Box, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { NewTodoPayload, Todo } from "./types/todo";
 import TodoForm from "./components/TodoForm";
+import TodoList from "./components/TodoList";
 
 const TodoApp: FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -19,6 +20,20 @@ const TodoApp: FC = () => {
       },
       ...prev,
     ]);
+  };
+
+  const onUpdate = (updateTodo: Todo) => {
+    setTodos(
+      todos.map((todo) => {
+        if (todo.id === updateTodo.id) {
+          return {
+            ...todo,
+            ...updateTodo,
+          };
+        }
+        return todo;
+      }),
+    );
   };
 
   return (
@@ -47,11 +62,14 @@ const TodoApp: FC = () => {
           p: 5,
           mt: 10,
           width: "100%",
-          top: 0
+          top: 0,
         }}
       >
         <Box maxWidth={700} width="100%">
-          <TodoForm onSubmit={onSubmit}></TodoForm>
+          <Stack>
+            <TodoForm onSubmit={onSubmit}></TodoForm>
+            <TodoList todos={todos} onUpdate={onUpdate} />
+          </Stack>
         </Box>
       </Box>
     </>
