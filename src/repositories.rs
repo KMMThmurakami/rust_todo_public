@@ -131,6 +131,7 @@ impl TodoRepository for TodoRepositoryForDb {
 }
 
 #[cfg(test)]
+#[cfg(feature = "database-test")]
 mod test {
     use super::*;
     use dotenv::dotenv;
@@ -138,7 +139,7 @@ mod test {
     use std::env;
 
     #[tokio::test]
-    async fn crud_scenario() {
+    async fn crud_scenario_db() {
         dotenv().ok();
         let database_url = &env::var("DATABASE_URL").expect("undefined [DATABASE_URL]");
         let pool = PgPool::connect(database_url)

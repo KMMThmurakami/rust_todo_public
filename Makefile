@@ -7,6 +7,9 @@ up:
 down:
 	docker-compose down
 
+down-a:
+	docker-compose down --rmi 'all'
+
 dev:
 	sqlx db create
 	sqlx migrate run
