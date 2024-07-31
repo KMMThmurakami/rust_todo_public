@@ -27,18 +27,19 @@ const TodoItem: FC<Props> = ({ todo, onUpdate, onDelete }) => {
             checked={todo.completed}
           />
         </Grid>
-      </Grid>
-      <Grid item xs={9}>
-        <Stack spacing={1}>
-          <Typography variant="caption" fontSize={16}>
-            {todo.text}
-          </Typography>
-        </Stack>
-      </Grid>
-      <Grid item xs={1}>
-        <Button onClick={handleDelete} color="error">
-          delete
-        </Button>
+
+        <Grid item xs={9}>
+          <Stack spacing={1}>
+            <Typography variant="caption" fontSize={16}>
+              {todo.text}
+            </Typography>
+          </Stack>
+        </Grid>
+        <Grid item xs={1}>
+          <Button onClick={handleDelete} color="error">
+            delete
+          </Button>
+        </Grid>
       </Grid>
     </Card>
   );

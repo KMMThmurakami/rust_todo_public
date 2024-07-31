@@ -5,7 +5,12 @@ import { Box, Stack, Typography } from "@mui/material";
 import { NewTodoPayload, Todo } from "./types/todo";
 import TodoForm from "./components/TodoForm";
 import TodoList from "./components/TodoList";
-import { addTodoItem, getTodoItems, updateTodoItem, deleteTodoItem } from "./lib/api/todo";
+import {
+  addTodoItem,
+  getTodoItems,
+  updateTodoItem,
+  deleteTodoItem,
+} from "./lib/api/todo";
 
 const TodoApp: FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
