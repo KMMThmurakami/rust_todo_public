@@ -1,5 +1,4 @@
 use super::RepositoryError;
-use anyhow::Ok;
 use axum::async_trait;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
@@ -14,6 +13,11 @@ pub trait LabelRepository: Clone + std::marker::Send + std::marker::Sync + 'stat
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, FromRow)]
 pub struct Label {
     pub id: i32,
+    pub name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct CreateLabel {
     pub name: String,
 }
 
@@ -142,10 +146,7 @@ pub mod test_utils {
 
     impl Label {
         pub fn new(id: i32, name: String) -> Self {
-            Self {
-                id,
-                name,
-            }
+            Self { id, name }
         }
     }
 
@@ -206,10 +207,7 @@ pub mod test_utils {
 
             // create
             let repository = LabelRepositoryForMemory::new();
-            let label = repository
-                .create(name)
-                .await
-                .expect("failed create label");
+            let label = repository.create(name).await.expect("failed create label");
             assert_eq!(expected, label);
 
             // all
