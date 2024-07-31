@@ -54,7 +54,7 @@ const TodoItem: FC<Props> = ({ todo, onUpdate, onDelete }) => {
           />
         </Grid>
 
-        <Grid item xs={8}>
+        <Grid item xs={8} sx={{ flexBasis: 100, ml: 2 }}>
           <Stack spacing={1}>
             <Typography variant="caption" fontSize={16}>
               {todo.text}
