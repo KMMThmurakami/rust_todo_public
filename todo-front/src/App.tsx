@@ -5,7 +5,12 @@ import { Box, Stack, Typography } from "@mui/material";
 import { NewTodoPayload, Todo } from "./types/todo";
 import TodoForm from "./components/TodoForm";
 import TodoList from "./components/TodoList";
-import { addTodoItem, getTodoItems } from "./lib/api/todo";
+import {
+  addTodoItem,
+  getTodoItems,
+  updateTodoItem,
+  deleteTodoItem,
+} from "./lib/api/todo";
 
 const TodoApp: FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -20,18 +25,18 @@ const TodoApp: FC = () => {
     setTodos(todos);
   };
 
-  const onUpdate = (updateTodo: Todo) => {
-    setTodos(
-      todos.map((todo) => {
-        if (todo.id === updateTodo.id) {
-          return {
-            ...todo,
-            ...updateTodo,
-          };
-        }
-        return todo;
-      }),
-    );
+  const onUpdate = async (updateTodo: Todo) => {
+    await updateTodoItem(updateTodo);
+    // APIより再度Todo配列を取得
+    const todos = await getTodoItems();
+    setTodos(todos);
+  };
+
+  const onDelete = async (id: number) => {
+    await deleteTodoItem(id);
+    // APIより再度Todo配列を取得
+    const todos = await getTodoItems();
+    setTodos(todos);
   };
 
   useEffect(() => {
@@ -73,7 +78,7 @@ const TodoApp: FC = () => {
         <Box maxWidth={700} width="100%">
           <Stack>
             <TodoForm onSubmit={onSubmit}></TodoForm>
-            <TodoList todos={todos} onUpdate={onUpdate} />
+            <TodoList todos={todos} onUpdate={onUpdate} onDelete={onDelete} />
           </Stack>
         </Box>
       </Box>
