@@ -6,7 +6,7 @@ use axum::{
     Extension, Router,
 };
 use dotenv::dotenv;
-use handles::{all_todo, create_todo, delete_todo, find_todo, update_todo};
+use handlers::{all_todo, create_todo, delete_todo, find_todo, update_todo};
 use repositories::{TodoRepository, TodoRepositoryForDb};
 use sqlx::PgPool;
 use std::{env, sync::Arc};
