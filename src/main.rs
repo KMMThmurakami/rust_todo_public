@@ -1,11 +1,11 @@
-mod handles;
+mod handlers;
 mod repositories;
 
 use axum::{
     routing::{get, post},
     Extension, Router,
 };
-use handles::{all_todo, create_todo, delete_todo, find_todo, update_todo};
+use handlers::{all_todo, create_todo, delete_todo, find_todo, update_todo};
 use repositories::{TodoRepository, TodoRepositoryForMemory};
 use std::{env, sync::Arc};
 
