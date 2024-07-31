@@ -7,11 +7,11 @@ use axum::{
 };
 use dotenv::dotenv;
 use handlers::todo::{all_todo, create_todo, delete_todo, find_todo, update_todo};
+use hyper::header::CONTENT_TYPE;
 use repositories::todo::{TodoRepository, TodoRepositoryForDb};
 use sqlx::PgPool;
 use std::{env, sync::Arc};
-use hyper::header::CONTENT_TYPE;
-use tower_http::cors::{Any, CorsLayer, AllowOrigin};
+use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 
 #[tokio::main]
 async fn main() {

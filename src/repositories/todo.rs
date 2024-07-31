@@ -1,17 +1,8 @@
+use super::RepositoryError;
 use anyhow::Ok;
 use axum::async_trait;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
-
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-enum RepositoryError {
-    #[error("Unexpected, Error: [{0}]")]
-    Unexpected(String),
-    #[error("NotFound, id is {0}")]
-    NotFound(i32),
-}
 
 #[async_trait]
 pub trait TodoRepository: Clone + std::marker::Send + std::marker::Sync + 'static {
