@@ -1,4 +1,4 @@
-use crate::repositories::{CreateTodo, TodoRepository, UpdateTodo};
+use crate::repositories::todo::{CreateTodo, TodoRepository, UpdateTodo};
 use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
 use std::sync::Arc;
 
