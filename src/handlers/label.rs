@@ -4,7 +4,6 @@ use std::sync::Arc;
 
 const ERR_STR_EMPTY: &str = "Error!: Can not be Empty";
 const ERR_STR_OVER: &str = "Error!: Over text length";
-// const ERR_STR_NOT_FOUND: &str = "Todo not found";
 
 pub async fn create_label<T: LabelRepository>(
     Extension(repository): Extension<Arc<T>>,
