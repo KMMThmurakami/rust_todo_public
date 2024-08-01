@@ -295,7 +295,7 @@ pub mod test_utils {
         use super::*;
 
         #[tokio::test]
-        async fn todo_crud_scenario() {
+        async fn crud_scenario() {
             let text = "todo text".to_string();
             let id = 1;
             let expected = TodoWithLabelFromRow::new(id, text.clone());
