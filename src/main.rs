@@ -92,7 +92,7 @@ async fn root() -> &'static str {
 mod test {
     use super::*;
     use crate::repositories::label::{test_utils::LabelRepositoryForMemory, Label};
-    use crate::repositories::todo::{test_utils::TodoRepositoryForMemory, CreateTodo, Todo};
+    use crate::repositories::todo::{test_utils::TodoRepositoryForMemory, CreateTodo, TodoWithLabelFromRow};
     use axum::{
         body::{to_bytes, Body},
         http::{header, Method, Request, StatusCode},
@@ -127,13 +127,13 @@ mod test {
             .unwrap()
     }
 
-    async fn res_to_todo(res: Response) -> Todo {
+    async fn res_to_todo(res: Response) -> TodoWithLabelFromRow {
         // axum 0.4.8, hyper 0.14.16
         // let bytes = hyper::body::to_bytes(res.into_body()).await.unwrap();
         // axum 0.7.5, hyper 1.4.1
         let bytes = to_bytes(res.into_body(), usize::MAX).await.unwrap();
         let body: String = String::from_utf8(bytes.to_vec()).unwrap();
-        let todo: Todo = serde_json::from_str(&body)
+        let todo: TodoWithLabelFromRow = serde_json::from_str(&body)
             .expect(&format!("cannnot convert Todo instance. body:{}", body));
         todo
     }
@@ -159,7 +159,7 @@ mod test {
 
     #[tokio::test]
     async fn should_created_todo() {
-        let expected = Todo::new(1, "should_return_created_todo".to_string());
+        let expected = TodoWithLabelFromRow::new(1, "should_return_created_todo".to_string());
         let todo_repository = TodoRepositoryForMemory::new();
         let req = build_todo_req_with_json(
             "/todos",
@@ -177,7 +177,7 @@ mod test {
 
     #[tokio::test]
     async fn should_find_todo() {
-        let expected = Todo::new(1, "should_find_todo".to_string());
+        let expected = TodoWithLabelFromRow::new(1, "should_find_todo".to_string());
         let todo_repository = TodoRepositoryForMemory::new();
         todo_repository
             .create(CreateTodo::new("should_find_todo".to_string()))
@@ -195,7 +195,7 @@ mod test {
 
     #[tokio::test]
     async fn should_get_all_todo() {
-        let expected = Todo::new(1, "should_get_all_todo".to_string());
+        let expected = TodoWithLabelFromRow::new(1, "should_get_all_todo".to_string());
         let todo_repository = TodoRepositoryForMemory::new();
         todo_repository
             .create(CreateTodo::new("should_get_all_todo".to_string()))
@@ -209,14 +209,14 @@ mod test {
             .unwrap();
         let bytes = to_bytes(res.into_body(), usize::MAX).await.unwrap();
         let body: String = String::from_utf8(bytes.to_vec()).unwrap();
-        let todo: Vec<Todo> = serde_json::from_str(&body)
+        let todo: Vec<TodoWithLabelFromRow> = serde_json::from_str(&body)
             .expect(&format!("cannot convert Todo instance. body:{}", body));
         assert_eq!(vec![expected], todo);
     }
 
     #[tokio::test]
     async fn should_update_todo() {
-        let expected = Todo::new(1, "should_update_todo".to_string());
+        let expected = TodoWithLabelFromRow::new(1, "should_update_todo".to_string());
         let todo_repository = TodoRepositoryForMemory::new();
         todo_repository
             .create(CreateTodo::new("should_update_todo".to_string()))
