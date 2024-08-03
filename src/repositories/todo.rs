@@ -176,7 +176,6 @@ impl TodoRepository for TodoRepositoryForDb {
 }
 
 #[cfg(test)]
-#[cfg(feature = "database-test")]
 mod test {
     use super::*;
     use dotenv::dotenv;
@@ -236,6 +235,7 @@ mod test {
         );
     }
 
+    #[cfg(feature = "database-test")]
     #[tokio::test]
     async fn crud_scenario_db() {
         dotenv().ok();
