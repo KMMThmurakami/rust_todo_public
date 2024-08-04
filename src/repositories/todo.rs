@@ -77,6 +77,7 @@ fn fold_entity(row: TodoWithLabelFromRow) -> TodoEntity {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct CreateTodo {
     pub text: String,
+    labels: Vec<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
@@ -244,12 +245,38 @@ mod test {
             .await
             .expect(&format!("fail connect database, url is [{}]", database_url));
 
+        // label data prepare
+        let label_name = String::from("test label");
+        let optional_label = sqlx::query_as::<_, Label>(
+            r#"
+                select * from labels where name = $1;
+            "#,
+        )
+        .bind(label_name.clone())
+        .fetch_optional(&pool)
+        .await
+        .expect("Failed to prepare label data.");
+        let label_1 = if let Some(label) = optional_label {
+            label
+        } else {
+            let label = sqlx::query_as::<_, Label>(
+                r#"
+                    insert into labels (name) values ($1) returning *;
+                "#,
+            )
+            .bind(label_name)
+            .fetch_optional(&pool)
+            .await
+            .expect("Failed to insert label data.");
+            label
+        };
+
         let repository = TodoRepositoryForDb::new(pool.clone());
         let todo_text = "[crud_scenario] text";
 
         // create
         let created = repository
-            .create(CreateTodo::new(todo_text.to_string()))
+            .create(CreateTodo::new(todo_text.to_string(), vec![label_1.id]))
             .await
             .expect("[create] returned Err");
         assert_eq!(created.text, todo_text);
@@ -314,8 +341,8 @@ pub mod test_utils {
     };
 
     impl CreateTodo {
-        pub fn new(text: String) -> Self {
-            Self { text }
+        pub fn new(text: String, labels: Vec<i32>) -> Self {
+            Self { text, labels }
         }
     }
 
@@ -410,9 +437,11 @@ pub mod test_utils {
             let expected = TodoEntity::new(id, text.clone());
 
             // create
+            todo!("labelデータの追加");
+            let labels = vec![];
             let repository = TodoRepositoryForMemory::new();
             let todo = repository
-                .create(CreateTodo { text })
+                .create(CreateTodo::new(text, labels))
                 .await
                 .expect("failed create todo");
             assert_eq!(expected, todo);
