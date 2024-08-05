@@ -179,7 +179,6 @@ mod test {
     async fn should_find_todo() {
         let expected = TodoEntity::new(1, "should_find_todo".to_string());
 
-        todo!("labelデータの追加");
         let labels = vec![];
         let todo_repository = TodoRepositoryForMemory::new();
         todo_repository
@@ -200,7 +199,6 @@ mod test {
     async fn should_get_all_todo() {
         let expected = TodoEntity::new(1, "should_get_all_todo".to_string());
 
-        todo!("labelデータの追加");
         let labels = vec![];
         let todo_repository = TodoRepositoryForMemory::new();
         todo_repository
@@ -224,7 +222,6 @@ mod test {
     async fn should_update_todo() {
         let expected = TodoEntity::new(1, "should_update_todo".to_string());
 
-        todo!("labelデータの追加");
         let labels = vec![];
         let todo_repository = TodoRepositoryForMemory::new();
         todo_repository
@@ -247,7 +244,6 @@ mod test {
 
     #[tokio::test]
     async fn should_delete_todo() {
-        todo!("labelデータの追加");
         let labels = vec![];
         let todo_repository = TodoRepositoryForMemory::new();
         todo_repository
