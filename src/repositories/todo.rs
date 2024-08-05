@@ -167,12 +167,11 @@ impl TodoRepository for TodoRepositoryForDb {
     }
 
     async fn update(&self, id: i32, payload: UpdateTodo) -> anyhow::Result<TodoEntity> {
-        // TODO: findを実行せずにupdateする
-
         let tx = self.pool.begin().await?;
 
+        // todo update
         let old_todo = self.find(id).await?;
-        sqlx::query_as::<_, TodoWithLabelFromRow>(
+        sqlx::query(
             r#"
                 update todos set text=$1, completed=$2 where id=$3 returning *;
             "#,
@@ -184,7 +183,7 @@ impl TodoRepository for TodoRepositoryForDb {
         .await?;
 
         if let Some(labels) = payload.labels {
-            // todos label update
+            // todo's label update
             // 一度関連するレコードを削除
             sqlx::query(
                 r#"
@@ -219,7 +218,7 @@ impl TodoRepository for TodoRepositoryForDb {
         // todo's label delete
         sqlx::query(
             r#"
-                delete from todos_labels where id=$1;
+                delete from todo_labels where id=$1;
             "#,
         )
         .bind(id)
@@ -320,7 +319,7 @@ mod test {
             .expect(&format!("fail connect database, url is [{}]", database_url));
 
         // label data prepare
-        let label_name = String::from("test label");
+        let label_name = String::from("test_label");
         let optional_label = sqlx::query_as::<_, Label>(
             r#"
                 select * from labels where name = $1;
@@ -435,12 +434,12 @@ pub mod test_utils {
     }
 
     impl TodoEntity {
-        pub fn new(id: i32, text: String) -> Self {
+        pub fn new(id: i32, text: String, labels: Vec<Label>) -> Self {
             Self {
                 id,
                 text,
                 completed: false,
-                labels: vec![],
+                labels,
             }
         }
     }
@@ -450,12 +449,14 @@ pub mod test_utils {
     #[derive(Debug, Clone)]
     pub struct TodoRepositoryForMemory {
         store: Arc<RwLock<TodoDatas>>,
+        labels: Vec<Label>,
     }
 
     impl TodoRepositoryForMemory {
-        pub fn new() -> Self {
+        pub fn new(labels: Vec<Label>) -> Self {
             TodoRepositoryForMemory {
                 store: Arc::default(),
+                labels,
             }
         }
 
@@ -466,6 +467,28 @@ pub mod test_utils {
         fn read_store_ref(&self) -> RwLockReadGuard<TodoDatas> {
             self.store.read().unwrap()
         }
+
+        // fn resolve_labels(&self, labels: Vec<i32>) -> Vec<Label> {
+        //     let mut label_list = self.labels.iter().cloned();
+        //     let labels = labels
+        //         .iter()
+        //         .map(|id| label_list.find(|label| label.id == *id).unwrap())
+        //         .collect();
+        //     labels
+        // }
+        fn resolve_labels(&self, labels: Vec<i32>) -> anyhow::Result<Vec<Label>> {
+            let mut label_list = self.labels.iter();
+            let resolved_labels: Result<Vec<Label>, _> = labels
+                .iter()
+                .map(|id| {
+                    label_list
+                        .find(|label| label.id == *id)
+                        .cloned()
+                        .ok_or_else(|| anyhow::anyhow!("Label with id {} not found", id))
+                })
+                .collect();
+            resolved_labels
+        }
     }
 
     #[async_trait]
@@ -473,7 +496,8 @@ pub mod test_utils {
         async fn create(&self, payload: CreateTodo) -> anyhow::Result<TodoEntity> {
             let mut store = self.write_store_ref();
             let id = (store.len() + 1) as i32;
-            let todo = TodoEntity::new(id, payload.text.clone());
+            let labels = self.resolve_labels(payload.labels)?;
+            let todo = TodoEntity::new(id, payload.text.clone(), labels);
             store.insert(id, todo.clone());
             Ok(todo)
         }
@@ -497,11 +521,15 @@ pub mod test_utils {
             let todo = store.get(&id).context(RepositoryError::NotFound(id))?;
             let text = payload.text.unwrap_or(todo.text.clone());
             let completed = payload.completed.unwrap_or(todo.completed);
+            let labels = match payload.labels {
+                Some(label_ids) => self.resolve_labels(label_ids)?,
+                None => todo.labels.clone(),
+            };
             let todo = TodoEntity {
                 id,
                 text,
                 completed,
-                labels: vec![],
+                labels,
             };
             store.insert(id, todo.clone());
             Ok(todo)
@@ -522,13 +550,23 @@ pub mod test_utils {
         async fn crud_scenario() {
             let text = "todo text".to_string();
             let id = 1;
-            let expected = TodoEntity::new(id, text.clone());
+            let label_data = Label {
+                id: 1,
+                name: String::from("test_label"),
+            };
+            let labels = vec![label_data.clone()];
+            let expected = TodoEntity {
+                id,
+                text: text.clone(),
+                completed: false,
+                labels: labels.clone(),
+            };
 
             // create
-            let labels = vec![];
-            let repository = TodoRepositoryForMemory::new();
+            // let labels = vec![];
+            let repository = TodoRepositoryForMemory::new(labels.clone());
             let todo = repository
-                .create(CreateTodo::new(text, labels))
+                .create(CreateTodo::new(text, vec![label_data.id]))
                 .await
                 .expect("failed create todo");
             assert_eq!(expected, todo);
@@ -549,7 +587,7 @@ pub mod test_utils {
                     UpdateTodo {
                         text: Some(text.clone()),
                         completed: Some(true),
-                        labels: Some(vec![])
+                        labels: Some(vec![]),
                     },
                 )
                 .await
