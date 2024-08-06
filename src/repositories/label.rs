@@ -112,7 +112,7 @@ mod test {
             .await
             .expect(&format!("fail connect database, url is [{}]", database_url));
 
-        let repository = LabelRepositoryForDb::new(pool.clone());
+        let repository = LabelRepositoryForDb::new(pool);
         let label_text = "test_label";
 
         // create
@@ -150,11 +150,11 @@ pub mod test_utils {
         }
     }
 
-    type LabelDatas = HashMap<i32, Label>;
+    type LabelData = HashMap<i32, Label>;
 
     #[derive(Debug, Clone)]
     pub struct LabelRepositoryForMemory {
-        store: Arc<RwLock<LabelDatas>>,
+        store: Arc<RwLock<LabelData>>,
     }
 
     impl LabelRepositoryForMemory {
@@ -164,11 +164,11 @@ pub mod test_utils {
             }
         }
 
-        fn write_store_ref(&self) -> RwLockWriteGuard<LabelDatas> {
+        fn write_store_ref(&self) -> RwLockWriteGuard<LabelData> {
             self.store.write().unwrap()
         }
 
-        fn read_store_ref(&self) -> RwLockReadGuard<LabelDatas> {
+        fn read_store_ref(&self) -> RwLockReadGuard<LabelData> {
             self.store.read().unwrap()
         }
     }
@@ -177,15 +177,20 @@ pub mod test_utils {
     impl LabelRepository for LabelRepositoryForMemory {
         async fn create(&self, name: String) -> anyhow::Result<Label> {
             let mut store = self.write_store_ref();
+            if let Some((_key, label)) = store.iter().find(|(_key, label)| label.name == name) {
+                return Ok(label.clone());
+            };
+
             let id = (store.len() + 1) as i32;
-            let todo = Label::new(id, name.clone());
-            store.insert(id, todo.clone());
-            Ok(todo)
+            let label = Label::new(id, name.clone());
+            store.insert(id, label.clone());
+            Ok(label)
         }
 
         async fn all(&self) -> anyhow::Result<Vec<Label>> {
             let store = self.read_store_ref();
-            Ok(Vec::from_iter(store.values().map(|label| label.clone())))
+            let labels = Vec::from_iter(store.values().map(|label| label.clone()));
+            Ok(labels)
         }
 
         async fn delete(&self, id: i32) -> anyhow::Result<()> {
@@ -200,23 +205,23 @@ pub mod test_utils {
         use super::*;
 
         #[tokio::test]
-        async fn crud_scenario() {
-            let name = "label text".to_string();
+        async fn label_crud_scenario() {
+            let text = "label text".to_string();
             let id = 1;
-            let expected = Label::new(id, name.clone());
+            let expected = Label::new(id, text.clone());
 
             // create
             let repository = LabelRepositoryForMemory::new();
-            let label = repository.create(name).await.expect("failed create label");
+            let label = repository.create(text).await.expect("failed create label");
             assert_eq!(expected, label);
 
             // all
-            let label = repository.all().await.expect("failed get all label");
+            let label = repository.all().await.unwrap();
             assert_eq!(vec![expected], label);
 
             // delete
             let res = repository.delete(id).await;
-            assert!(res.is_ok());
+            assert!(res.is_ok())
         }
     }
 }
