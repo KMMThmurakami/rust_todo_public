@@ -128,7 +128,7 @@ mod test {
         assert_eq!(label.name, label_text);
 
         // delete
-        let _ = repository
+        repository
             .delete(label.id)
             .await
             .expect("[delete] returned Err");
