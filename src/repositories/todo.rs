@@ -319,7 +319,7 @@ mod test {
             .expect(&format!("fail connect database, url is [{}]", database_url));
 
         // label data prepare
-        let label_name = String::from("test label");
+        let label_name = String::from("test label from repositories/todo.rs");
         let optional_label = sqlx::query_as::<_, Label>(
             r#"
                 select * from labels where name = $1;
