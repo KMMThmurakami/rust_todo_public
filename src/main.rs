@@ -98,7 +98,6 @@ mod test {
         http::{header, Method, Request, StatusCode},
         response::Response,
     };
-    use std::usize;
     use tower::ServiceExt;
 
     fn build_req_with_json(path: &str, method: Method, json_body: String) -> Request<Body> {
@@ -227,7 +226,6 @@ mod test {
             "/todos/1",
             Method::PATCH,
             r#"{
-                "id": 1,
                 "text": "should_update_todo",
                 "completed": false
             }"#
