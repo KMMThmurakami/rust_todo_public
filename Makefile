@@ -20,7 +20,7 @@ dev:
 	cargo watch -x run
 
 test:
-	cargo test
+	cargo test -- --color always --nocapture
 
 # standalone test
 test-s:

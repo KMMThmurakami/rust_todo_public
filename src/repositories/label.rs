@@ -121,17 +121,20 @@ mod test {
             .await
             .expect("[create] returned Err");
         assert_eq!(label.name, label_text);
+        println!("[repositories::label::test::crud_scenario] create label is {:?}", label);
 
         // all
         // let labels = repository.all().await.expect("[all] returned Err");
         // let label = labels.first().unwrap();
         // assert_eq!(label.name, label_text);
+        // println!("[repositories::label::test::crud_scenario] all labels is {:?}", labels);
 
         // delete
         repository
             .delete(label.id)
             .await
             .expect("[delete] returned Err");
+        println!("[repositories::label::test::crud_scenario] delete label is {:?}", label);
     }
 }
 

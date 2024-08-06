@@ -414,6 +414,18 @@ mod test {
         .await
         .expect("[delete] todo_labels fetch error");
         assert!(rows.len() == 0);
+
+        // delete label data prepare
+        sqlx::query(
+            r#"
+                delete from labels where id=$1;
+            "#,
+        )
+        .bind(label_1.id)
+        .execute(&pool)
+        .await
+        .expect("[delete] returned Err");
+        println!("[repositories::todo::test::crud_scenario_db] label_1.id is {:?}", label_1.id);
     }
 }
 
