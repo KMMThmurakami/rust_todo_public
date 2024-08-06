@@ -207,7 +207,10 @@ mod test {
         // let labels = vec![];
         let todo_repository = TodoRepositoryForMemory::new(labels.clone());
         todo_repository
-            .create(CreateTodo::new("should_get_all_todo".to_string(), label_ids))
+            .create(CreateTodo::new(
+                "should_get_all_todo".to_string(),
+                label_ids,
+            ))
             .await
             .expect("failed create todo");
         let req = build_todo_req_with_empty(Method::GET, "/todos");
