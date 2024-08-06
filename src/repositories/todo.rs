@@ -338,10 +338,10 @@ mod test {
                 "#,
             )
             .bind(label_name)
-            .fetch_optional(&pool)
+            .fetch_one(&pool)
             .await
             .expect("Failed to insert label data.");
-            label.unwrap()
+            label
         };
 
         let repository = TodoRepositoryForDb::new(pool.clone());
