@@ -5,88 +5,6 @@ use axum::async_trait;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 
-#[async_trait]
-pub trait TodoRepository: Clone + std::marker::Send + std::marker::Sync + 'static {
-    async fn create(&self, payload: CreateTodo) -> anyhow::Result<TodoEntity>;
-    async fn find(&self, id: i32) -> anyhow::Result<TodoEntity>;
-    async fn all(&self) -> anyhow::Result<Vec<TodoEntity>>;
-    async fn update(&self, id: i32, payload: UpdateTodo) -> anyhow::Result<TodoEntity>;
-    async fn delete(&self, id: i32) -> anyhow::Result<()>;
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
-pub struct TodoWithLabelFromRow {
-    id: i32,
-    text: String,
-    completed: bool,
-    label_id: Option<i32>,
-    label_name: Option<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
-pub struct TodoFromRow {
-    id: i32,
-    text: String,
-    completed: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-pub struct TodoEntity {
-    pub id: i32,
-    pub text: String,
-    pub completed: bool,
-    pub labels: Vec<Label>,
-}
-
-fn fold_entities(rows: Vec<TodoWithLabelFromRow>) -> Vec<TodoEntity> {
-    let mut rows = rows.iter();
-    let mut accum: Vec<TodoEntity> = vec![];
-    'outer: while let Some(row) = rows.next() {
-        let mut todos = accum.iter_mut();
-        while let Some(todo) = todos.next() {
-            // idが一致＝Todoに紐づくラベルが複数存在している
-            if todo.id == row.id {
-                todo.labels.push(Label {
-                    id: row.label_id.unwrap(),
-                    name: row.label_name.clone().unwrap(),
-                });
-                continue 'outer;
-            }
-        }
-
-        // Todoのidに一致がなかった時のみ到達、TodoEntityを作成
-        let labels = if row.label_id.is_some() {
-            vec![Label {
-                id: row.label_id.unwrap(),
-                name: row.label_name.clone().unwrap(),
-            }]
-        } else {
-            vec![]
-        };
-
-        accum.push(TodoEntity {
-            id: row.id,
-            text: row.text.clone(),
-            completed: row.completed,
-            labels,
-        });
-    }
-    accum
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-pub struct CreateTodo {
-    pub text: String,
-    labels: Vec<i32>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-pub struct UpdateTodo {
-    pub text: Option<String>,
-    completed: Option<bool>,
-    labels: Option<Vec<i32>>,
-}
-
 #[derive(Debug, Clone)]
 pub struct TodoRepositoryForDb {
     pool: PgPool,
@@ -249,7 +167,90 @@ impl TodoRepository for TodoRepositoryForDb {
     }
 }
 
+#[async_trait]
+pub trait TodoRepository: Clone + std::marker::Send + std::marker::Sync + 'static {
+    async fn create(&self, payload: CreateTodo) -> anyhow::Result<TodoEntity>;
+    async fn find(&self, id: i32) -> anyhow::Result<TodoEntity>;
+    async fn all(&self) -> anyhow::Result<Vec<TodoEntity>>;
+    async fn update(&self, id: i32, payload: UpdateTodo) -> anyhow::Result<TodoEntity>;
+    async fn delete(&self, id: i32) -> anyhow::Result<()>;
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
+pub struct TodoFromRow {
+    id: i32,
+    text: String,
+    completed: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
+pub struct TodoWithLabelFromRow {
+    id: i32,
+    text: String,
+    completed: bool,
+    label_id: Option<i32>,
+    label_name: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct TodoEntity {
+    pub id: i32,
+    pub text: String,
+    pub completed: bool,
+    pub labels: Vec<Label>,
+}
+
+fn fold_entities(rows: Vec<TodoWithLabelFromRow>) -> Vec<TodoEntity> {
+    let mut rows = rows.iter();
+    let mut accum: Vec<TodoEntity> = vec![];
+    'outer: while let Some(row) = rows.next() {
+        let mut todos = accum.iter_mut();
+        while let Some(todo) = todos.next() {
+            // idが一致＝Todoに紐づくラベルが複数存在している
+            if todo.id == row.id {
+                todo.labels.push(Label {
+                    id: row.label_id.unwrap(),
+                    name: row.label_name.clone().unwrap(),
+                });
+                continue 'outer;
+            }
+        }
+
+        // Todoのidに一致がなかった時のみ到達、TodoEntityを作成
+        let labels = if row.label_id.is_some() {
+            vec![Label {
+                id: row.label_id.unwrap(),
+                name: row.label_name.clone().unwrap(),
+            }]
+        } else {
+            vec![]
+        };
+
+        accum.push(TodoEntity {
+            id: row.id,
+            text: row.text.clone(),
+            completed: row.completed,
+            labels,
+        });
+    }
+    accum
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct CreateTodo {
+    pub text: String,
+    labels: Vec<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct UpdateTodo {
+    pub text: Option<String>,
+    completed: Option<bool>,
+    labels: Option<Vec<i32>>,
+}
+
 #[cfg(test)]
+#[cfg(feature = "database-test")]
 mod test {
     use super::*;
     use dotenv::dotenv;
@@ -309,7 +310,6 @@ mod test {
         );
     }
 
-    #[cfg(feature = "database-test")]
     #[tokio::test]
     async fn crud_scenario_db() {
         dotenv().ok();
@@ -319,7 +319,7 @@ mod test {
             .expect(&format!("fail connect database, url is [{}]", database_url));
 
         // label data prepare
-        let label_name = String::from("test_label");
+        let label_name = String::from("test label");
         let optional_label = sqlx::query_as::<_, Label>(
             r#"
                 select * from labels where name = $1;
@@ -369,12 +369,12 @@ mod test {
         assert_eq!(created, *todo);
 
         // update
-        let update_text = "[crud_scenario] update text";
+        let updated_text = "[crud_scenario] updated text";
         let todo = repository
             .update(
                 todo.id,
                 UpdateTodo {
-                    text: Some(update_text.to_string()),
+                    text: Some(updated_text.to_string()),
                     completed: Some(true),
                     labels: Some(vec![]),
                 },
@@ -382,7 +382,7 @@ mod test {
             .await
             .expect("[update] returned Err");
         assert_eq!(created.id, todo.id);
-        assert_eq!(todo.text, update_text);
+        assert_eq!(todo.text, updated_text);
         assert!(todo.labels.len() == 0);
 
         // delete
@@ -390,7 +390,7 @@ mod test {
             .delete(todo.id)
             .await
             .expect("[delete] returned Err");
-        let res = repository.find(created.id).await;
+        let res = repository.find(created.id).await; // expect not found err
         assert!(res.is_err());
 
         let todo_rows = sqlx::query(
@@ -419,7 +419,6 @@ mod test {
 
 #[cfg(test)]
 pub mod test_utils {
-    use super::*;
     use anyhow::Context;
     use axum::async_trait;
     use std::{
@@ -427,11 +426,7 @@ pub mod test_utils {
         sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
     };
 
-    impl CreateTodo {
-        pub fn new(text: String, labels: Vec<i32>) -> Self {
-            Self { text, labels }
-        }
-    }
+    use super::*;
 
     impl TodoEntity {
         pub fn new(id: i32, text: String, labels: Vec<Label>) -> Self {
@@ -441,6 +436,12 @@ pub mod test_utils {
                 completed: false,
                 labels,
             }
+        }
+    }
+
+    impl CreateTodo {
+        pub fn new(text: String, labels: Vec<i32>) -> Self {
+            Self { text, labels }
         }
     }
 
@@ -468,26 +469,13 @@ pub mod test_utils {
             self.store.read().unwrap()
         }
 
-        // fn resolve_labels(&self, labels: Vec<i32>) -> Vec<Label> {
-        //     let mut label_list = self.labels.iter().cloned();
-        //     let labels = labels
-        //         .iter()
-        //         .map(|id| label_list.find(|label| label.id == *id).unwrap())
-        //         .collect();
-        //     labels
-        // }
-        fn resolve_labels(&self, labels: Vec<i32>) -> anyhow::Result<Vec<Label>> {
-            let mut label_list = self.labels.iter();
-            let resolved_labels: Result<Vec<Label>, _> = labels
+        fn resolve_labels(&self, labels: Vec<i32>) -> Vec<Label> {
+            let mut label_list = self.labels.iter().cloned();
+            let labels = labels
                 .iter()
-                .map(|id| {
-                    label_list
-                        .find(|label| label.id == *id)
-                        .cloned()
-                        .ok_or_else(|| anyhow::anyhow!("Label with id {} not found", id))
-                })
+                .map(|id| label_list.find(|label| label.id == *id).unwrap())
                 .collect();
-            resolved_labels
+            labels
         }
     }
 
@@ -496,7 +484,7 @@ pub mod test_utils {
         async fn create(&self, payload: CreateTodo) -> anyhow::Result<TodoEntity> {
             let mut store = self.write_store_ref();
             let id = (store.len() + 1) as i32;
-            let labels = self.resolve_labels(payload.labels)?;
+            let labels = self.resolve_labels(payload.labels);
             let todo = TodoEntity::new(id, payload.text.clone(), labels);
             store.insert(id, todo.clone());
             Ok(todo)
@@ -522,7 +510,7 @@ pub mod test_utils {
             let text = payload.text.unwrap_or(todo.text.clone());
             let completed = payload.completed.unwrap_or(todo.completed);
             let labels = match payload.labels {
-                Some(label_ids) => self.resolve_labels(label_ids)?,
+                Some(label_ids) => self.resolve_labels(label_ids),
                 None => todo.labels.clone(),
             };
             let todo = TodoEntity {
@@ -547,12 +535,12 @@ pub mod test_utils {
         use super::*;
 
         #[tokio::test]
-        async fn crud_scenario() {
+        async fn todo_crud_scenario() {
             let text = "todo text".to_string();
             let id = 1;
             let label_data = Label {
                 id: 1,
-                name: String::from("test_label"),
+                name: String::from("test label"),
             };
             let labels = vec![label_data.clone()];
             let expected = TodoEntity {
@@ -563,7 +551,11 @@ pub mod test_utils {
             };
 
             // create
-            // let labels = vec![];
+            let label_data = Label {
+                id: 1,
+                name: String::from("test label"),
+            };
+            let labels = vec![label_data.clone()];
             let repository = TodoRepositoryForMemory::new(labels.clone());
             let todo = repository
                 .create(CreateTodo::new(text, vec![label_data.id]))
@@ -580,7 +572,7 @@ pub mod test_utils {
             assert_eq!(vec![expected], todo);
 
             // update
-            let text = "update text".to_string();
+            let text = "update todo text".to_string();
             let todo = repository
                 .update(
                     1,
@@ -604,7 +596,7 @@ pub mod test_utils {
 
             // delete
             let res = repository.delete(id).await;
-            assert!(res.is_ok());
+            assert!(res.is_ok())
         }
     }
 }

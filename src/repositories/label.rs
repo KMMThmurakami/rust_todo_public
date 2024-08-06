@@ -113,7 +113,7 @@ mod test {
             .expect(&format!("fail connect database, url is [{}]", database_url));
 
         let repository = LabelRepositoryForDb::new(pool);
-        let label_text = "test_label";
+        let label_text = "test label";
 
         // create
         let label = repository
@@ -200,7 +200,6 @@ pub mod test_utils {
         }
     }
 
-    #[cfg(test)]
     mod test {
         use super::*;
 

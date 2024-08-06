@@ -151,7 +151,7 @@ mod test {
         (
             vec![Label {
                 id,
-                name: String::from("test_label"),
+                name: String::from("test label"),
             }],
             vec![id],
         )
