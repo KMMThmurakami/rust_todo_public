@@ -207,8 +207,10 @@ mod test {
             .unwrap();
         let bytes = to_bytes(res.into_body(), usize::MAX).await.unwrap();
         let body: String = String::from_utf8(bytes.to_vec()).unwrap();
-        let todos: Vec<TodoEntity> = serde_json::from_str(&body)
-            .expect(&format!("cannot convert Todo list instance. body: {}", body));
+        let todos: Vec<TodoEntity> = serde_json::from_str(&body).expect(&format!(
+            "cannot convert Todo list instance. body: {}",
+            body
+        ));
         assert_eq!(vec![expected], todos);
     }
 

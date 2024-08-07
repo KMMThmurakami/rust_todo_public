@@ -121,7 +121,10 @@ mod test {
             .await
             .expect("[create] returned Err");
         assert_eq!(label.name, label_text);
-        println!("[repositories::label::test::crud_scenario] create label is {:?}", label);
+        println!(
+            "[repositories::label::test::crud_scenario] create label is {:?}",
+            label
+        );
 
         // all
         // let labels = repository.all().await.expect("[all] returned Err");
@@ -134,7 +137,10 @@ mod test {
             .delete(label.id)
             .await
             .expect("[delete] returned Err");
-        println!("[repositories::label::test::crud_scenario] delete label is {:?}", label);
+        println!(
+            "[repositories::label::test::crud_scenario] delete label is {:?}",
+            label
+        );
     }
 }
 
@@ -219,7 +225,10 @@ pub mod test_utils {
 
             // create
             let repository = LabelRepositoryForMemory::new();
-            let label = repository.create(text.clone()).await.expect("failed label create");
+            let label = repository
+                .create(text.clone())
+                .await
+                .expect("failed label create");
             assert_eq!(expected, label);
 
             // all

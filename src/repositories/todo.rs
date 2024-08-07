@@ -425,7 +425,10 @@ mod test {
         .execute(&pool)
         .await
         .expect("[delete] returned Err");
-        println!("[repositories::todo::test::crud_scenario_db] label_1.id is {:?}", label_1.id);
+        println!(
+            "[repositories::todo::test::crud_scenario_db] label_1.id is {:?}",
+            label_1.id
+        );
     }
 }
 
