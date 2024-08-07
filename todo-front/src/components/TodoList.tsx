@@ -11,7 +11,7 @@ type Props = {
 
 const TodoList: FC<Props> = ({ todos, onUpdate, onDelete }) => {
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2} sx={{mt: 4}}>
       <Typography variant="h2">todo list</Typography>
       <Stack spacing={2}>
         {todos.map((todo) => (
