@@ -11,7 +11,7 @@ import {
   Box,
   TextField,
 } from "@mui/material";
-import { modalInnerStyle } from "../style/modal";
+import { modalInnerStyle } from "../styles/modal";
 
 type Props = {
   todo: Todo;
