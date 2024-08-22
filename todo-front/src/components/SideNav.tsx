@@ -23,7 +23,9 @@ type Props = {
   filterLabelId: number | null;
   onSelectLabel: (label: Label | null) => void;
   onSubmitNewLabel: (newLabel: NewLabelPayload) => void;
-  onDeleteLabel: (id: number) => void;
+  onDeleteLabel: (id: number, name: string) => void;
+  deleteError: string | null;
+  onResetErrText: () => void;
 };
 
 const SideNav: FC<Props> = ({
@@ -32,12 +34,15 @@ const SideNav: FC<Props> = ({
   onSelectLabel,
   onSubmitNewLabel,
   onDeleteLabel,
+  deleteError,
+  onResetErrText,
 }) => {
   const [editName, setEditName] = useState("");
   const [openLabelModal, setOpenLabelModal] = useState(false);
 
   const onSubmit = () => {
     setEditName("");
+    onResetErrText();
     onSubmitNewLabel({ name: editName });
   };
 
@@ -52,6 +57,7 @@ const SideNav: FC<Props> = ({
                 onSelectLabel(label.id === filterLabelId ? null : label)
               }
               selected={label.id === filterLabelId}
+              sx={{ pointerEvents: "none" }}
             >
               <Stack direction="row" alignItems="center" spacing={1}>
                 <LabelIcon fontSize="small" />
@@ -69,7 +75,13 @@ const SideNav: FC<Props> = ({
           </ListItemButton>
         </ListItem>
       </List>
-      <Modal open={openLabelModal} onClose={() => setOpenLabelModal(false)}>
+      <Modal
+        open={openLabelModal}
+        onClose={() => {
+          setOpenLabelModal(false);
+          onResetErrText();
+        }}
+      >
         <Box sx={modalInnerStyle}>
           <Stack spacing={3}>
             <Stack spacing={1}>
@@ -84,6 +96,16 @@ const SideNav: FC<Props> = ({
                 <Button onClick={onSubmit}>submit</Button>
               </Box>
             </Stack>
+            <p
+              style={{
+                color: "red",
+                margin: "0 auto",
+                height: "24px",
+                fontWeight: "bold",
+              }}
+            >
+              {deleteError}
+            </p>
             <Stack spacing={1}>
               {labels.map((label) => (
                 <Stack
@@ -94,7 +116,9 @@ const SideNav: FC<Props> = ({
                 >
                   <IconButton
                     size="small"
-                    onClick={() => onDeleteLabel(label.id)}
+                    onClick={() => {
+                      onDeleteLabel(label.id, label.name);
+                    }}
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>

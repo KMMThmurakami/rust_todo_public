@@ -25,6 +25,8 @@ const TodoApp: FC = () => {
   const [labels, setLabels] = useState<Label[]>([]);
   const [filterLabelId, setFilterLabelId] = useState<number | null>(null);
 
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const onSubmit = async (payload: NewTodoPayload) => {
     if (!payload.text) return;
 
@@ -59,9 +61,18 @@ const TodoApp: FC = () => {
     }
   };
 
-  const onDeleteLabel = async (id: number) => {
-    await deleteLabelItem(id);
-    setLabels((prev) => prev.filter((label) => label.id !== id));
+  const onDeleteLabel = async (id: number, name: string) => {
+    setDeleteError(null);
+    try {
+      await deleteLabelItem(id);
+      setLabels((prev) => prev.filter((label) => label.id !== id));
+    } catch (e) {
+      setDeleteError(`【${name}】 TODOとの連携を解除してください!!`);
+    }
+  };
+
+  const onResetErrText = () => {
+    setDeleteError(null); // モーダルを開く前にエラーメッセージをリセット
   };
 
   const dispTodo = filterLabelId
@@ -115,6 +126,8 @@ const TodoApp: FC = () => {
           filterLabelId={filterLabelId}
           onSubmitNewLabel={onSubmitNewLabel}
           onDeleteLabel={onDeleteLabel}
+          deleteError={deleteError}
+          onResetErrText={onResetErrText}
         />
       </Box>
       <Box
