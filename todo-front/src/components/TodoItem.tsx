@@ -65,7 +65,11 @@ const TodoItem: FC<Props> = ({ todo, onUpdate, onDelete, labels }) => {
 
         <Grid item xs={8} sx={{ flexBasis: 100, ml: 2 }}>
           <Stack spacing={1}>
-            <Typography variant="caption" fontSize={16}>
+            <Typography
+              variant="caption"
+              fontSize={16}
+              sx={{ paddingTop: "6px" }}
+            >
               {todo.text}
             </Typography>
             <Stack direction="row" spacing={1}>

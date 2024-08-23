@@ -114,7 +114,7 @@ const TodoApp: FC = () => {
           borderRight: "1px solid gray",
           position: "fixed",
           height: "calc(100% - 80px)",
-          width: 200,
+          width: "20%",
           zIndex: 2,
           top: 80,
           left: 0,
@@ -137,8 +137,9 @@ const TodoApp: FC = () => {
           position: "fixed",
           p: 5,
           mt: 10,
-          width: "100%",
+          width: "80%",
           top: 0,
+          left: "20%",
         }}
       >
         <Box maxWidth={700} width="100%">

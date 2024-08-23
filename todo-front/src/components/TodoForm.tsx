@@ -72,14 +72,14 @@ const TodoForm: FC<Props> = ({ onSubmit, labels }) => {
               select label
             </Button>
           </Grid>
-          <Grid item xs={3}>
-            <Button
-              onClick={addTodoHandler}
-              fullWidth
-              sx={{
-                maxWidth: 128,
-              }}
-            >
+          <Grid
+            item
+            xs={3}
+            sx={{
+              maxWidth: "100%",
+            }}
+          >
+            <Button onClick={addTodoHandler} fullWidth>
               add todo
             </Button>
           </Grid>
