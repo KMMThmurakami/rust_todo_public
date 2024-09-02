@@ -15,29 +15,85 @@ use repositories::{
     label::{LabelRepository, LabelRepositoryForDb},
     todo::{TodoRepository, TodoRepositoryForDb},
 };
+use shuttle_runtime::CustomError;
 use sqlx::PgPool;
 use std::{env, sync::Arc};
 use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 
-#[tokio::main]
-async fn main() {
+// #[tokio::main]
+// async fn main() {
+//     // loggingの初期化
+//     // RUST_LOG=debug cargo run
+//     let log_level = env::var("RUST_LOG").unwrap_or("info".to_string());
+//     env::set_var("RUST_LOG", log_level);
+//     tracing_subscriber::fmt::init();
+//     dotenv().ok();
+
+//     let database_url = &env::var("DATABASE_URL").expect("undefined [DATABASE_URL]");
+//     tracing::debug!("start connect database...");
+//     let pool = PgPool::connect(database_url)
+//         .await
+//         .expect(&format!("fail connect database, url is [{}]", database_url));
+//     // let repository = TodoRepositoryForDb::new(pool.clone());
+//     let app = create_app(
+//         TodoRepositoryForDb::new(pool.clone()),
+//         LabelRepositoryForDb::new(pool.clone()),
+//     );
+
+//     // axum 0.4.8
+//     // let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+//     // axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
+
+//     // axum 0.7.5
+//     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+//         .await
+//         .unwrap();
+//     tracing::debug!("listening on {:?}", listener);
+//     axum::serve(listener, app).await.unwrap();
+// }
+
+// #[derive(Clone)]
+// struct MyState {
+//     pool: PgPool,
+// }
+
+#[shuttle_runtime::main]
+async fn axum(#[shuttle_shared_db::Postgres] pool: PgPool) -> shuttle_axum::ShuttleAxum {
+    sqlx::migrate!()
+        .run(&pool)
+        .await
+        .map_err(CustomError::new)?;
+
+    // let state = MyState { pool };
+    // let router = Router::new()
+    //     .route("/todos", post(add))
+    //     .route("/todos/:id", get(retrieve))
+    //     .with_state(state);
+
+    // Ok(router.into())
     // loggingの初期化
     // RUST_LOG=debug cargo run
     let log_level = env::var("RUST_LOG").unwrap_or("info".to_string());
     env::set_var("RUST_LOG", log_level);
-    tracing_subscriber::fmt::init();
+    // トレースサブスクライバの初期化
+    if tracing_subscriber::fmt::try_init().is_err() {
+        // 既に初期化されている場合は何もしない
+    }
     dotenv().ok();
 
-    let database_url = &env::var("DATABASE_URL").expect("undefined [DATABASE_URL]");
-    tracing::debug!("start connect database...");
-    let pool = PgPool::connect(database_url)
-        .await
-        .expect(&format!("fail connect database, url is [{}]", database_url));
+    // let database_url = &env::var("DATABASE_URL").expect("undefined [DATABASE_URL]");
+    // tracing::debug!("start connect database...");
+    // let pool = PgPool::connect(database_url)
+    //     .await
+    //     .expect(&format!("fail connect database, url is [{}]", database_url));
+
     // let repository = TodoRepositoryForDb::new(pool.clone());
     let app = create_app(
         TodoRepositoryForDb::new(pool.clone()),
         LabelRepositoryForDb::new(pool.clone()),
     );
+
+    // let state = MyState { pool };
 
     // axum 0.4.8
     // let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
@@ -48,7 +104,8 @@ async fn main() {
         .await
         .unwrap();
     tracing::debug!("listening on {:?}", listener);
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app.clone()).await.unwrap();
+    Ok(app.into())
 }
 
 fn create_app<Todo: TodoRepository, Label: LabelRepository>(
