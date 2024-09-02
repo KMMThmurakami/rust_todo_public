@@ -57,7 +57,7 @@ async fn axum(#[shuttle_shared_db::Postgres] pool: PgPool) -> shuttle_axum::Shut
     // axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
 
     // axum 0.7.5
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000")
         .await
         .unwrap();
     tracing::debug!("listening on {:?}", listener);
