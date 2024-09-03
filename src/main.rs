@@ -24,7 +24,7 @@ use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 #[shuttle_runtime::main]
 // async fn main() {
 async fn axum(#[shuttle_shared_db::Postgres] pool: PgPool) -> shuttle_axum::ShuttleAxum {
-        // loggingの初期化
+    // loggingの初期化
     // RUST_LOG=debug cargo run
     let log_level = env::var("RUST_LOG").unwrap_or("info".to_string());
     env::set_var("RUST_LOG", log_level);
@@ -57,9 +57,7 @@ async fn axum(#[shuttle_shared_db::Postgres] pool: PgPool) -> shuttle_axum::Shut
     // axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
 
     // axum 0.7.5
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
     tracing::debug!("listening on {:?}", listener);
     axum::serve(listener, app.clone()).await.unwrap();
     Ok(app.into())
