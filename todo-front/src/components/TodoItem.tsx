@@ -1,4 +1,11 @@
-import { ChangeEventHandler, FC, useEffect, useState } from "react";
+import {
+  ChangeEventHandler,
+  FC,
+  memo,
+  useEffect,
+  useState,
+  // useCallback,
+} from "react";
 import { Todo, UpdateTodoPayload, Label } from "../types/todo";
 import {
   Button,
@@ -12,21 +19,23 @@ import {
   TextField,
   Chip,
   FormControlLabel,
+  CircularProgress,
 } from "@mui/material";
 import { modalInnerStyle } from "../styles/modal";
 import { toggleLabels } from "../lib/toggleLabels";
 
 type Props = {
   todo: Todo;
-  onUpdate: (todo: UpdateTodoPayload) => void;
-  onDelete: (id: number) => void;
+  onUpdate: (todo: UpdateTodoPayload) => Promise<void>; // Promiseを返す非同期関数に変更
+  onDelete: (id: number) => Promise<void>; // Promiseを返す非同期関数に変更
   labels: Label[];
 };
 
-const TodoItem: FC<Props> = ({ todo, onUpdate, onDelete, labels }) => {
+const TodoItem: FC<Props> = memo(({ todo, onUpdate, onDelete, labels }) => {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState("");
   const [editLabels, setEditLabels] = useState<Label[]>([]);
+  const [isLoading, setIsLoading] = useState(false); // ローディング状態を追加
 
   useEffect(() => {
     setEditText(todo.text);
@@ -34,24 +43,29 @@ const TodoItem: FC<Props> = ({ todo, onUpdate, onDelete, labels }) => {
   }, [todo, editing]);
 
   const handleCompletedCheckbox: ChangeEventHandler = () => {
+    setIsLoading(true); // ローディング開始
     onUpdate({
       ...todo,
       completed: !todo.completed,
       labels: todo.labels.map((label) => label.id),
-    });
+    }).finally(() => setIsLoading(false)); // ローディング終了
   };
 
   const onCloseEditModal = () => {
+    setIsLoading(true); // ローディング開始
     onUpdate({
       ...todo,
       text: editText,
       completed: todo.completed,
       labels: editLabels.map((label) => label.id),
-    });
+    }).finally(() => setIsLoading(false)); // ローディング終了
     setEditing(false);
   };
 
-  const handleDelete = () => onDelete(todo.id);
+  const handleDelete = () => {
+    setIsLoading(true); // ローディング開始
+    onDelete(todo.id).finally(() => setIsLoading(false)); // ローディング終了
+  };
 
   return (
     <Card sx={{ p: 1 }}>
@@ -90,6 +104,10 @@ const TodoItem: FC<Props> = ({ todo, onUpdate, onDelete, labels }) => {
           </Stack>
         </Grid>
       </Grid>
+
+      {/* ローディング中にスピナーを表示 */}
+      {isLoading && <CircularProgress size={24} />}
+
       <Modal open={editing} onClose={onCloseEditModal}>
         <Box sx={modalInnerStyle}>
           <Stack spacing={2}>
@@ -123,6 +141,6 @@ const TodoItem: FC<Props> = ({ todo, onUpdate, onDelete, labels }) => {
       </Modal>
     </Card>
   );
-};
+});
 
 export default TodoItem;

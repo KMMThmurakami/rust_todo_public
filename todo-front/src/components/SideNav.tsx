@@ -14,7 +14,7 @@ import { Box } from "@mui/system";
 import LabelIcon from "@mui/icons-material/Label";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useState, FC } from "react";
+import { useState, FC, memo, useCallback, useMemo } from "react";
 import { modalInnerStyle } from "../styles/modal";
 import { Label, NewLabelPayload } from "../types/todo";
 
@@ -28,36 +28,44 @@ type Props = {
   onResetErrText: () => void;
 };
 
-const SideNav: FC<Props> = ({
-  labels,
-  filterLabelId,
-  onSelectLabel,
-  onSubmitNewLabel,
-  onDeleteLabel,
-  deleteError,
-  onResetErrText,
-}) => {
-  const [editName, setEditName] = useState("");
-  const [openLabelModal, setOpenLabelModal] = useState(false);
+const SideNav: FC<Props> = memo(
+  ({
+    labels,
+    filterLabelId,
+    onSelectLabel,
+    onSubmitNewLabel,
+    onDeleteLabel,
+    deleteError,
+    onResetErrText,
+  }) => {
+    const [editName, setEditName] = useState("");
+    const [openLabelModal, setOpenLabelModal] = useState(false);
 
-  const onSubmit = () => {
-    setEditName("");
-    onResetErrText();
-    onSubmitNewLabel({ name: editName });
-  };
+    const handleOpenModal = useCallback(() => {
+      setOpenLabelModal(true);
+      onResetErrText();
+    }, [onResetErrText]);
 
-  return (
-    <>
-      <List>
-        <ListSubheader>Labels</ListSubheader>
-        {labels.map((label) => (
+    const handleCloseModal = useCallback(() => {
+      setOpenLabelModal(false);
+      onResetErrText();
+    }, [onResetErrText]);
+
+    const onSubmit = useCallback(() => {
+      if (editName.trim() === "") return;
+      onSubmitNewLabel({ name: editName });
+      setEditName("");
+    }, [editName, onSubmitNewLabel]);
+
+    const labelList = useMemo(
+      () =>
+        labels.map((label) => (
           <ListItem key={label.id} disablePadding>
             <ListItemButton
               onClick={() =>
                 onSelectLabel(label.id === filterLabelId ? null : label)
               }
               selected={label.id === filterLabelId}
-              sx={{ pointerEvents: "none" }}
             >
               <Stack direction="row" alignItems="center" spacing={1}>
                 <LabelIcon fontSize="small" />
@@ -65,72 +73,76 @@ const SideNav: FC<Props> = ({
               </Stack>
             </ListItemButton>
           </ListItem>
-        ))}
-        <ListItem disablePadding>
-          <ListItemButton onClick={() => setOpenLabelModal(true)}>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <EditIcon fontSize="small" />
-              <span>edit label</span>
-            </Stack>
-          </ListItemButton>
-        </ListItem>
-      </List>
-      <Modal
-        open={openLabelModal}
-        onClose={() => {
-          setOpenLabelModal(false);
-          onResetErrText();
-        }}
-      >
-        <Box sx={modalInnerStyle}>
-          <Stack spacing={3}>
-            <Stack spacing={1}>
-              <Typography variant="subtitle1">new label</Typography>
-              <TextField
-                label="new label"
-                variant="filled"
-                fullWidth
-                onChange={(e) => setEditName(e.target.value)}
-              />
-              <Box textAlign="right">
-                <Button onClick={onSubmit}>submit</Button>
-              </Box>
-            </Stack>
-            <p
-              style={{
-                color: "red",
-                margin: "0 auto",
-                height: "24px",
-                fontWeight: "bold",
-              }}
-            >
-              {deleteError}
-            </p>
-            <Stack spacing={1}>
-              {labels.map((label) => (
-                <Stack
-                  key={label.id}
-                  direction="row"
-                  alignItems="center"
-                  spacing={1}
-                >
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      onDeleteLabel(label.id, label.name);
-                    }}
+        )),
+      [labels, filterLabelId, onSelectLabel]
+    );
+
+    return (
+      <>
+        <List>
+          <ListSubheader>Labels</ListSubheader>
+          {labelList}
+          <ListItem disablePadding>
+            <ListItemButton onClick={handleOpenModal}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <EditIcon fontSize="small" />
+                <span>edit label</span>
+              </Stack>
+            </ListItemButton>
+          </ListItem>
+        </List>
+        <Modal open={openLabelModal} onClose={handleCloseModal}>
+          <Box sx={modalInnerStyle}>
+            <Stack spacing={3}>
+              <Stack spacing={1}>
+                <Typography variant="subtitle1">New Label</Typography>
+                <TextField
+                  label="new label"
+                  variant="filled"
+                  fullWidth
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                />
+                <Box textAlign="right">
+                  <Button onClick={onSubmit}>Submit</Button>
+                </Box>
+              </Stack>
+              <p
+                style={{
+                  color: "red",
+                  margin: "0 auto",
+                  height: "24px",
+                  fontWeight: "bold",
+                }}
+              >
+                {deleteError}
+              </p>
+              <Stack spacing={1}>
+                {labels.map((label) => (
+                  <Stack
+                    key={label.id}
+                    direction="row"
+                    alignItems="center"
+                    spacing={1}
                   >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                  <span>{label.name}</span>
-                </Stack>
-              ))}
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        onDeleteLabel(label.id, label.name);
+                      }}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                    <span>{label.name}</span>
+                  </Stack>
+                ))}
+              </Stack>
             </Stack>
-          </Stack>
-        </Box>
-      </Modal>
-    </>
-  );
-};
+          </Box>
+        </Modal>
+      </>
+    );
+  }
+);
 
 export default SideNav;

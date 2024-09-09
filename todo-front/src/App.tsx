@@ -1,4 +1,13 @@
-import { useEffect, useState, FC } from "react";
+import {
+  useEffect,
+  useState,
+  FC,
+  memo,
+  useMemo,
+  lazy,
+  Suspense,
+  useCallback,
+} from "react";
 import "modern-css-reset";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Box, Stack, Typography } from "@mui/material";
@@ -9,8 +18,8 @@ import {
   NewLabelPayload,
   UpdateTodoPayload,
 } from "./types/todo";
-import TodoForm from "./components/TodoForm";
-import TodoList from "./components/TodoList";
+const TodoForm = lazy(() => import("./components/TodoForm"));
+const TodoList = lazy(() => import("./components/TodoList"));
 import SideNav from "./components/SideNav";
 import {
   addTodoItem,
@@ -20,48 +29,43 @@ import {
 } from "./lib/api/todo";
 import { addLabelItem, deleteLabelItem, getLabelItems } from "./lib/api/label";
 
-const TodoApp: FC = () => {
+const TodoApp: FC = memo(() => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [labels, setLabels] = useState<Label[]>([]);
   const [filterLabelId, setFilterLabelId] = useState<number | null>(null);
-
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const onSubmit = async (payload: NewTodoPayload) => {
     if (!payload.text) return;
-
-    await addTodoItem(payload);
-    // APIより再度Todo配列を取得
-    const todos = await getTodoItems();
-    setTodos(todos);
+    const newTodo = await addTodoItem(payload);
+    setTodos((prevTodos) => [...prevTodos, newTodo]);
   };
 
-  const onUpdate = async (updateTodo: UpdateTodoPayload) => {
+  const onUpdate = useCallback(async (updateTodo: UpdateTodoPayload) => {
     await updateTodoItem(updateTodo);
-    // APIより再度Todo配列を取得
-    const todos = await getTodoItems();
-    setTodos(todos);
-  };
+    setTodos(await getTodoItems());
+  }, []);
 
-  const onDelete = async (id: number) => {
+  const onDelete = useCallback(async (id: number) => {
     await deleteTodoItem(id);
-    // APIより再度Todo配列を取得
-    const todos = await getTodoItems();
-    setTodos(todos);
-  };
+    setTodos(await getTodoItems());
+  }, []);
 
-  const onSelectLabel = (label: Label | null) => {
+  const onSelectLabel = useCallback((label: Label | null) => {
     setFilterLabelId(label?.id ?? null);
-  };
+  }, []);
 
-  const onSubmitNewLabel = async (newLabel: NewLabelPayload) => {
-    if (!labels.some((label) => label.name === newLabel.name)) {
-      const res = await addLabelItem(newLabel);
-      setLabels([...labels, res]);
-    }
-  };
+  const onSubmitNewLabel = useCallback(
+    async (newLabel: NewLabelPayload) => {
+      if (!labels.some((label) => label.name === newLabel.name)) {
+        const res = await addLabelItem(newLabel);
+        setLabels((prevLabels) => [...prevLabels, res]);
+      }
+    },
+    [labels]
+  );
 
-  const onDeleteLabel = async (id: number, name: string) => {
+  const onDeleteLabel = useCallback(async (id: number, name: string) => {
     setDeleteError(null);
     try {
       await deleteLabelItem(id);
@@ -69,25 +73,28 @@ const TodoApp: FC = () => {
     } catch (e) {
       setDeleteError(`【${name}】 TODOとの連携を解除してください!!`);
     }
-  };
+  }, []);
 
-  const onResetErrText = () => {
-    setDeleteError(null); // モーダルを開く前にエラーメッセージをリセット
-  };
+  const onResetErrText = useCallback(() => {
+    setDeleteError(null);
+  }, []);
 
-  const dispTodo = filterLabelId
-    ? todos.filter((todo) =>
-        todo.labels.some((label) => label.id === filterLabelId)
-      )
-    : todos;
+  const dispTodo = useMemo(() => {
+    return filterLabelId
+      ? todos.filter((todo) =>
+          todo.labels.some((label) => label.id === filterLabelId)
+        )
+      : todos;
+  }, [filterLabelId, todos]);
 
   useEffect(() => {
-    (async () => {
+    const fetchData = async () => {
       const todos = await getTodoItems();
-      setTodos(todos);
       const labelResponse = await getLabelItems();
+      setTodos(todos);
       setLabels(labelResponse);
-    })();
+    };
+    fetchData();
   }, []);
 
   return (
@@ -144,19 +151,21 @@ const TodoApp: FC = () => {
       >
         <Box maxWidth={700} width="100%">
           <Stack>
-            <TodoForm onSubmit={onSubmit} labels={labels}></TodoForm>
-            <TodoList
-              todos={dispTodo}
-              labels={labels}
-              onUpdate={onUpdate}
-              onDelete={onDelete}
-            />
+            <Suspense fallback={<div>Loading...</div>}>
+              <TodoForm onSubmit={onSubmit} labels={labels} />
+              <TodoList
+                todos={dispTodo}
+                labels={labels}
+                onUpdate={onUpdate}
+                onDelete={onDelete}
+              />
+            </Suspense>
           </Stack>
         </Box>
       </Box>
     </>
   );
-};
+});
 
 const theme = createTheme({
   typography: {
