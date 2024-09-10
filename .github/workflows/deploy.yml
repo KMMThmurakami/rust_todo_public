@@ -1,16 +1,37 @@
-name: Deploy
+name: Deploy React App to Cloudflare
+
 on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Deploy
-        uses: cloudflare/wrangler-action@v3
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: setup
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20.x"
+
+      - name: install
+        run: |
+          cd todo-front
+          npm ci
+
+      - name: build
+        run: |
+          cd todo-front
+          npm run build
+
+      - name: deploy
+        uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          projectName: todo-front
+          directory: todo-front/build
