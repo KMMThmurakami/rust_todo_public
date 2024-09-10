@@ -28,9 +28,13 @@ jobs:
           cd todo-front
           npm run build
 
+      - name: Install Wrangler
+        run: npm install -g wrangler
+
       - name: deploy
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           command: pages publish ./todo-front/build
+          wranglerVersion: 3.11.0
