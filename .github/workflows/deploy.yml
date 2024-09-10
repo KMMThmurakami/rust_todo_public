@@ -33,5 +33,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: todo-front
-          directory: todo-front/build
+          command: pages publish ./todo-front/build
