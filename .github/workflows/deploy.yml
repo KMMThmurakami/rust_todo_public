@@ -1,4 +1,4 @@
-name: Deploy React App to Cloudflare
+name: Deploy Vite App to Cloudflare
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
           npm run build
 
       - name: deploy
-        run: npx wrangler pages publish ./todo-front/build --project-name=todo-front
+        run: npx wrangler pages publish ./todo-front/dist --verbose
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
