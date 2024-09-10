@@ -29,7 +29,7 @@ jobs:
           npm run build
 
       - name: deploy
-        run: npx wrangler pages publish ./todo-front/dist --verbose
+        run: npx wrangler pages publish ./todo-front/dist
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
