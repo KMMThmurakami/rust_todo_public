@@ -44,7 +44,6 @@ const SideNav: FC<Props> = memo(
   }) => {
     const [editName, setEditName] = useState("");
     const [openLabelModal, setOpenLabelModal] = useState(false);
-    // const [selected, setSelected] = useState("");
 
     const handleOpenModal = useCallback(() => {
       setOpenLabelModal(true);
@@ -71,6 +70,10 @@ const SideNav: FC<Props> = memo(
                 onSelectLabel(label.id === filterLabelId ? null : label)
               }
               selected={label.id === filterLabelId}
+              sx={{
+                bgcolor: label.id === filterLabelId ? "#1976d2" : "transparent",
+                color: label.id === filterLabelId ? "#1976d2" : "inherit",
+              }}
             >
               <Stack direction="row" alignItems="center" spacing={1}>
                 <LabelIcon fontSize="small" />
