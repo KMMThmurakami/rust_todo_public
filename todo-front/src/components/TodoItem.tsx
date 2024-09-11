@@ -19,7 +19,6 @@ import {
   TextField,
   Chip,
   FormControlLabel,
-  CircularProgress,
 } from "@mui/material";
 import { modalInnerStyle } from "../styles/modal";
 import { toggleLabels } from "../lib/toggleLabels";
@@ -82,9 +81,14 @@ const TodoItem: FC<Props> = memo(({ todo, onUpdate, onDelete, labels }) => {
             <Typography
               variant="caption"
               fontSize={16}
-              sx={{ paddingTop: "6px" }}
+              sx={{ paddingTop: "6px", wordWrap: "break-word" }}
             >
               {todo.text}
+              {isLoading && (
+                <span style={{ marginLeft: "10px", color: "#1976d2" }}>
+                  loading...
+                </span>
+              )}
             </Typography>
             <Stack direction="row" spacing={1}>
               {todo.labels?.map((label) => (
@@ -104,9 +108,6 @@ const TodoItem: FC<Props> = memo(({ todo, onUpdate, onDelete, labels }) => {
           </Stack>
         </Grid>
       </Grid>
-
-      {/* ローディング中にスピナーを表示 */}
-      {isLoading && <CircularProgress size={24} sx={{ ml: 10 }} />}
 
       <Modal open={editing} onClose={onCloseEditModal}>
         <Box sx={modalInnerStyle}>
