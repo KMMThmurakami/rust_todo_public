@@ -10,7 +10,13 @@ import {
 } from "react";
 import "modern-css-reset";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { Box, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Stack,
+  Typography,
+  CircularProgress,
+  ListSubheader,
+} from "@mui/material";
 import {
   Label,
   NewTodoPayload,
@@ -34,6 +40,7 @@ const TodoApp: FC = memo(() => {
   const [labels, setLabels] = useState<Label[]>([]);
   const [filterLabelId, setFilterLabelId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true); // ローディング状態を追加
 
   const onSubmit = async (payload: NewTodoPayload) => {
     if (!payload.text) return;
@@ -89,10 +96,12 @@ const TodoApp: FC = memo(() => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true); // ローディング開始
       const todos = await getTodoItems();
       const labelResponse = await getLabelItems();
       setTodos(todos);
       setLabels(labelResponse);
+      setLoading(false); // ローディング終了
     };
     fetchData();
   }, []);
@@ -127,15 +136,25 @@ const TodoApp: FC = memo(() => {
           left: 0,
         }}
       >
-        <SideNav
-          labels={labels}
-          onSelectLabel={onSelectLabel}
-          filterLabelId={filterLabelId}
-          onSubmitNewLabel={onSubmitNewLabel}
-          onDeleteLabel={onDeleteLabel}
-          deleteError={deleteError}
-          onResetErrText={onResetErrText}
-        />
+        <ListSubheader>LABELS</ListSubheader>
+        {loading ? ( // ローディング中にスピナーを表示
+          <CircularProgress
+            size={40}
+            sx={{ margin: "20px auto", display: "block" }}
+          />
+        ) : (
+          <Suspense fallback={<div>Loading...</div>}>
+            <SideNav
+              labels={labels}
+              onSelectLabel={onSelectLabel}
+              filterLabelId={filterLabelId}
+              onSubmitNewLabel={onSubmitNewLabel}
+              onDeleteLabel={onDeleteLabel}
+              deleteError={deleteError}
+              onResetErrText={onResetErrText}
+            />
+          </Suspense>
+        )}
       </Box>
       <Box
         sx={{
@@ -151,15 +170,22 @@ const TodoApp: FC = memo(() => {
       >
         <Box maxWidth={700} width="100%">
           <Stack>
-            <Suspense fallback={<div>Loading...</div>}>
-              <TodoForm onSubmit={onSubmit} labels={labels} />
-              <TodoList
-                todos={dispTodo}
-                labels={labels}
-                onUpdate={onUpdate}
-                onDelete={onDelete}
-              />
-            </Suspense>
+            <TodoForm onSubmit={onSubmit} labels={labels} />
+            <Typography variant="h2" sx={{ mt: 4, mb: 4 }}>
+              LIST
+            </Typography>
+            {loading ? ( // ローディング中にスピナーを表示
+              <CircularProgress size={40} sx={{ margin: "20px auto" }} />
+            ) : (
+              <Suspense fallback={<div>Loading...</div>}>
+                <TodoList
+                  todos={dispTodo}
+                  labels={labels}
+                  onUpdate={onUpdate}
+                  onDelete={onDelete}
+                />
+              </Suspense>
+            )}
           </Stack>
         </Box>
       </Box>

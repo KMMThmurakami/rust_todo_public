@@ -4,7 +4,6 @@ import {
   List,
   ListItem,
   ListItemButton,
-  ListSubheader,
   Modal,
   Stack,
   TextField,
@@ -28,6 +27,11 @@ type Props = {
   onResetErrText: () => void;
 };
 
+// const LabelColor = {
+//   unselected: "#000000",
+//   selected: "#1976d2",
+// };
+
 const SideNav: FC<Props> = memo(
   ({
     labels,
@@ -40,6 +44,7 @@ const SideNav: FC<Props> = memo(
   }) => {
     const [editName, setEditName] = useState("");
     const [openLabelModal, setOpenLabelModal] = useState(false);
+    // const [selected, setSelected] = useState("");
 
     const handleOpenModal = useCallback(() => {
       setOpenLabelModal(true);
@@ -80,7 +85,6 @@ const SideNav: FC<Props> = memo(
     return (
       <>
         <List>
-          <ListSubheader>Labels</ListSubheader>
           {labelList}
           <ListItem disablePadding>
             <ListItemButton onClick={handleOpenModal}>

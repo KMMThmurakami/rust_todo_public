@@ -106,7 +106,7 @@ const TodoItem: FC<Props> = memo(({ todo, onUpdate, onDelete, labels }) => {
       </Grid>
 
       {/* ローディング中にスピナーを表示 */}
-      {isLoading && <CircularProgress size={24} />}
+      {isLoading && <CircularProgress size={24} sx={{ ml: 10 }} />}
 
       <Modal open={editing} onClose={onCloseEditModal}>
         <Box sx={modalInnerStyle}>
