@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { modalInnerStyle } from "../styles/modal";
 import { toggleLabels } from "../lib/toggleLabels";
+import styles from "../style.module.css";
 
 type Props = {
   onSubmit: (newTodo: NewTodoPayload) => void;
@@ -58,12 +59,12 @@ const TodoForm: FC<Props> = memo(({ onSubmit, labels }) => {
 
   return (
     <Paper elevation={2}>
-      <Box sx={{ p: 2 }}>
+      <Box className={styles.form}>
         <Grid
           container
           rowSpacing={2}
           columnSpacing={5}
-          sx={{ justifyContent: "space-between" }}
+          className={styles.form_area}
         >
           <Grid item xs={12}>
             <TextField
@@ -71,7 +72,7 @@ const TodoForm: FC<Props> = memo(({ onSubmit, labels }) => {
               variant="filled"
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
-              fullWidth
+              className={styles.form_text}
             />
           </Grid>
           <Grid item xs={12}>
@@ -79,18 +80,17 @@ const TodoForm: FC<Props> = memo(({ onSubmit, labels }) => {
               {labelChips}
             </Stack>
           </Grid>
-          <Grid item xs={3} xl={7}>
+          <Grid item xs={2}>
             <Button
               onClick={handleOpenModal}
-              fullWidth
               color="secondary"
-              sx={{ maxWidth: 128 }}
+              className={styles.form_button}
             >
               Select Labels
             </Button>
           </Grid>
-          <Grid item xs={3}>
-            <Button onClick={addTodoHandler} fullWidth>
+          <Grid item xs={1.5}>
+            <Button onClick={addTodoHandler} className={styles.form_button}>
               Add Todo
             </Button>
           </Grid>

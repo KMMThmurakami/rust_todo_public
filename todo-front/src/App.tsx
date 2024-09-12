@@ -34,6 +34,7 @@ import {
   deleteTodoItem,
 } from "./lib/api/todo";
 import { addLabelItem, deleteLabelItem, getLabelItems } from "./lib/api/label";
+import styles from "./style.module.css";
 
 const TodoApp: FC = memo(() => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -78,7 +79,7 @@ const TodoApp: FC = memo(() => {
       await deleteLabelItem(id);
       setLabels((prev) => prev.filter((label) => label.id !== id));
     } catch (e) {
-      setDeleteError(`【${name}】 TODOとの連携を解除してください!!`);
+      setDeleteError(`【${name}】 \nTODOとの連携を解除してください!!`);
     }
   }, []);
 
@@ -108,40 +109,15 @@ const TodoApp: FC = memo(() => {
 
   return (
     <>
-      <Box
-        sx={{
-          backgroundColor: "white",
-          borderBottom: "1px solid gray",
-          display: "flex",
-          alignItems: "center",
-          position: "fixed",
-          top: 0,
-          p: 2,
-          width: "100%",
-          height: 80,
-          zIndex: 3,
-        }}
-      >
+      <Box className={styles.title}>
         <Typography variant="h1">Todo App</Typography>
       </Box>
-      <Box
-        sx={{
-          backgroundColor: "white",
-          borderRight: "1px solid gray",
-          position: "fixed",
-          height: "calc(100% - 80px)",
-          width: "20%",
-          zIndex: 2,
-          top: 80,
-          left: 0,
-        }}
-      >
+      <Box className={styles.sideNav}>
         <ListSubheader>LABELS</ListSubheader>
         {loading ? ( // ローディング中にスピナーを表示
-          <CircularProgress
-            size={40}
-            sx={{ margin: "20px auto", display: "block" }}
-          />
+          <div className={styles.progress}>
+            <CircularProgress size={40} />
+          </div>
         ) : (
           <Suspense fallback={<div>Loading...</div>}>
             <SideNav
@@ -156,26 +132,17 @@ const TodoApp: FC = memo(() => {
           </Suspense>
         )}
       </Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          position: "fixed",
-          p: 5,
-          mt: 10,
-          width: "80%",
-          top: 0,
-          left: "20%",
-        }}
-      >
-        <Box maxWidth={700} width="100%">
+      <Box className={styles.contents}>
+        <Box className={styles.contents_box}>
           <Stack>
             <TodoForm onSubmit={onSubmit} labels={labels} />
-            <Typography variant="h2" sx={{ mt: 4, mb: 4 }}>
-              LIST
-            </Typography>
+            <div className={styles.contents_title}>
+              <Typography variant="h2">LIST</Typography>
+            </div>
             {loading ? ( // ローディング中にスピナーを表示
-              <CircularProgress size={40} sx={{ margin: "20px auto" }} />
+              <div className={styles.progress}>
+                <CircularProgress size={40} />
+              </div>
             ) : (
               <Suspense fallback={<div>Loading...</div>}>
                 <TodoList

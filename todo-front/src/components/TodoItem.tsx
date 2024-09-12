@@ -22,6 +22,7 @@ import {
 } from "@mui/material";
 import { modalInnerStyle } from "../styles/modal";
 import { toggleLabels } from "../lib/toggleLabels";
+import styles from "../style.module.css";
 
 type Props = {
   todo: Todo;
@@ -68,20 +69,19 @@ const TodoItem: FC<Props> = memo(({ todo, onUpdate, onDelete, labels }) => {
 
   return (
     <Card sx={{ p: 1 }}>
-      <Grid container spacing={2} alignItems="center">
+      <Grid container spacing={2} className={styles.item}>
         <Grid item xs={1}>
           <Checkbox
             onChange={handleCompletedCheckbox}
             checked={todo.completed}
           />
         </Grid>
-
-        <Grid item xs={8} sx={{ flexBasis: 100, ml: 2 }}>
+        <Grid item xs={8}>
           <Stack spacing={1}>
             <Typography
               variant="caption"
               fontSize={16}
-              sx={{ paddingTop: "6px", wordWrap: "break-word" }}
+              className={styles.item_text}
             >
               {todo.text}
               {isLoading && (

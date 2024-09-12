@@ -13,9 +13,10 @@ import { Box } from "@mui/system";
 import LabelIcon from "@mui/icons-material/Label";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useState, FC, memo, useCallback, useMemo } from "react";
+import { useState, FC, memo, useCallback, useMemo, Fragment } from "react";
 import { modalInnerStyle } from "../styles/modal";
 import { Label, NewLabelPayload } from "../types/todo";
+import styles from "../style.module.css";
 
 type Props = {
   labels: Label[];
@@ -27,10 +28,7 @@ type Props = {
   onResetErrText: () => void;
 };
 
-// const LabelColor = {
-//   unselected: "#000000",
-//   selected: "#1976d2",
-// };
+const selected = "#1976d2";
 
 const SideNav: FC<Props> = memo(
   ({
@@ -71,8 +69,8 @@ const SideNav: FC<Props> = memo(
               }
               selected={label.id === filterLabelId}
               sx={{
-                bgcolor: label.id === filterLabelId ? "#1976d2" : "transparent",
-                color: label.id === filterLabelId ? "#1976d2" : "inherit",
+                bgcolor: label.id === filterLabelId ? selected : "transparent",
+                color: label.id === filterLabelId ? selected : "inherit",
               }}
             >
               <Stack direction="row" alignItems="center" spacing={1}>
@@ -84,6 +82,19 @@ const SideNav: FC<Props> = memo(
         )),
       [labels, filterLabelId, onSelectLabel]
     );
+
+    // 改行ありのテキストを出力
+    const MultiLineBody = ({ body }: { body: string | null }) => {
+      const texts = body?.split("\n").map((item, index) => {
+        return (
+          <Fragment key={index}>
+            {item}
+            <br />
+          </Fragment>
+        );
+      });
+      return <div>{texts}</div>;
+    };
 
     return (
       <>
@@ -114,16 +125,9 @@ const SideNav: FC<Props> = memo(
                   <Button onClick={onSubmit}>Submit</Button>
                 </Box>
               </Stack>
-              <p
-                style={{
-                  color: "red",
-                  margin: "0 auto",
-                  height: "24px",
-                  fontWeight: "bold",
-                }}
-              >
-                {deleteError}
-              </p>
+              <div className={styles.error_text}>
+                <MultiLineBody body={deleteError} />
+              </div>
               <Stack spacing={1}>
                 {labels.map((label) => (
                   <Stack
