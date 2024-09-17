@@ -201,11 +201,13 @@ pub struct TodoEntity {
 }
 
 fn fold_entities(rows: Vec<TodoWithLabelFromRow>) -> Vec<TodoEntity> {
-    let mut rows = rows.iter();
+    // let mut rows = rows.iter();
     let mut accum: Vec<TodoEntity> = vec![];
-    'outer: while let Some(row) = rows.next() {
-        let mut todos = accum.iter_mut();
-        while let Some(todo) = todos.next() {
+    // 'outer: while let Some(row) = rows.next() {
+    'outer: for row in rows {
+        let todos = accum.iter_mut();
+        // while let Some(todo) = todos.next() {
+        for todo in todos {
             // idが一致＝Todoに紐づくラベルが複数存在している
             if todo.id == row.id {
                 todo.labels.push(Label {

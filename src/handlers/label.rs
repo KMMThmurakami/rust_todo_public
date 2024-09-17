@@ -10,7 +10,7 @@ pub async fn create_label<T: LabelRepository>(
     Json(payload): Json<CreateLabel>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let response = match payload.name.len() {
-        len if len <= 0 => (StatusCode::BAD_REQUEST, ERR_STR_EMPTY.to_string()).into_response(),
+        0 => (StatusCode::BAD_REQUEST, ERR_STR_EMPTY.to_string()).into_response(),
         len if len > 100 => (StatusCode::BAD_REQUEST, ERR_STR_OVER.to_string()).into_response(),
         _ => {
             let label = repository
@@ -35,10 +35,8 @@ pub async fn delete_label<T: LabelRepository>(
     Path(id): Path<i32>,
     Extension(repository): Extension<Arc<T>>,
 ) -> StatusCode {
-    let response = match repository.delete(id).await {
+    match repository.delete(id).await {
         Ok(_) => StatusCode::NO_CONTENT,
         Err(_) => StatusCode::NOT_FOUND,
-    };
-
-    response
+    }
 }

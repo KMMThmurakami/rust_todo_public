@@ -11,7 +11,7 @@ pub async fn create_todo<T: TodoRepository>(
     Json(payload): Json<CreateTodo>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let response = match payload.text.len() {
-        len if len <= 0 => (StatusCode::BAD_REQUEST, ERR_STR_EMPTY.to_string()).into_response(),
+        0 => (StatusCode::BAD_REQUEST, ERR_STR_EMPTY.to_string()).into_response(),
         len if len > 100 => (StatusCode::BAD_REQUEST, ERR_STR_OVER.to_string()).into_response(),
         _ => {
             let todo = repository
@@ -48,7 +48,7 @@ pub async fn update_todo<T: TodoRepository>(
     Json(payload): Json<UpdateTodo>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let response = match payload.text.as_deref().unwrap_or("").len() {
-        len if len <= 0 => (StatusCode::BAD_REQUEST, ERR_STR_EMPTY.to_string()).into_response(),
+        0 => (StatusCode::BAD_REQUEST, ERR_STR_EMPTY.to_string()).into_response(),
         len if len > 100 => (StatusCode::BAD_REQUEST, ERR_STR_OVER.to_string()).into_response(),
         _ => match repository.update(id, payload).await {
             Ok(todo) => (StatusCode::CREATED, Json(todo)).into_response(),
@@ -63,10 +63,8 @@ pub async fn delete_todo<T: TodoRepository>(
     Path(id): Path<i32>,
     Extension(repository): Extension<Arc<T>>,
 ) -> StatusCode {
-    let response = match repository.delete(id).await {
+    match repository.delete(id).await {
         Ok(_) => StatusCode::NO_CONTENT,
         Err(_) => StatusCode::NOT_FOUND,
-    };
-
-    response
+    }
 }
