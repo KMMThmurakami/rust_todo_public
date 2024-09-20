@@ -36,6 +36,8 @@ fn Blog(id: i32) -> Element {
 fn Home() -> Element {
     let mut count = use_signal(|| 0);
     let mut text = use_signal(|| String::from("..."));
+    let blog_data = use_server_future(get_blog_data)?.value();
+    let blog_data_resource = use_resource(get_blog_data).value();
 
     rsx! {
         Link {
@@ -59,6 +61,8 @@ fn Home() -> Element {
                 "Get Server Data"
             }
             p { "Server data : {text}"}
+            p { "Blog data: {blog_data:?}"}
+            p { "Blog data client: {blog_data_resource:?}"}
         }
     }
 }
@@ -72,4 +76,13 @@ async fn post_server_data(data: String) -> Result<(), ServerFnError> {
 #[server(GetServerData)]
 async fn get_server_data() -> Result<String, ServerFnError> {
     Ok("Hello from the server!".to_string())
+}
+
+#[server(GetBlogData)]
+async fn get_blog_data() -> Result<String, ServerFnError> {
+    Ok(reqwest::get("https://jsonplaceholder.typicode.com/posts/1")
+        .await
+        .unwrap()
+        .text()
+        .await.unwrap())
 }
