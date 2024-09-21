@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 enum Route {
     #[route("/")]
     Home {},
-    #[route("/blog/:id")]
-    Blog { id: i32 },
+    // #[route("/blog/:id")]
+    // Blog { id: i32 },
 }
 
 fn main() {
@@ -25,59 +25,59 @@ fn App() -> Element {
     }
 }
 
-#[component]
-fn Blog(id: i32) -> Element {
-    rsx! {
-        Link { to: Route::Home {}, "Go to counter" }
-        "Blog post {id}"
-    }
-}
+// #[component]
+// fn Blog(id: i32) -> Element {
+//     rsx! {
+//         Link { to: Route::Home {}, "Go to counter" }
+//         "Blog post {id}"
+//     }
+// }
 
 #[component]
 fn Home() -> Element {
-    let mut count = use_signal(|| 0);
-    let mut text = use_signal(|| String::from("..."));
-    let blog_data = use_server_future(get_blog_data)?.value();
-    let blog_data_resource = use_resource(get_blog_data).value();
+    // let mut count = use_signal(|| 0);
+    // let mut text = use_signal(|| String::from("..."));
+    let todo_data = use_server_future(get_todo_data)?.value();     // SSR
+    // let todo_data_resource = use_resource(get_todo_data).value();  // CSR
 
     rsx! {
-        Link {
-            to: Route::Blog {
-                id: count()
-            },
-            "Go to blog"
-        }
+        // Link {
+        //     to: Route::Blog {
+        //         id: count()
+        //     },
+        //     "Go to blog"
+        // }
         div {
-            h1 { "High-Five counter: {count}" }
-            button { onclick: move |_| count += 1, "Up high!" }
-            button { onclick: move |_| count -= 1, "Down low!" }
-            button {
-                onclick: move |_| async move {
-                    if let Ok(data) = get_server_data().await {
-                        tracing::info!("Client received: {}", data);
-                        text.set(data.clone());
-                        post_server_data(data).await.unwrap();
-                    }
-                },
-                "Get Server Data"
-            }
-            p { "Server data : {text}"}
-            p { "Blog data: {blog_data:?}"}
-            p { "Blog data client: {blog_data_resource:?}"}
+            // h1 { "High-Five counter: {count}" }
+            // button { onclick: move |_| count += 1, "Up high!" }
+            // button { onclick: move |_| count -= 1, "Down low!" }
+            // button {
+            //     onclick: move |_| async move {
+            //         if let Ok(data) = get_server_data().await {
+            //             tracing::info!("Client received: {}", data);
+            //             text.set(data.clone());
+            //             post_server_data(data).await.unwrap();
+            //         }
+            //     },
+            //     "Get Server Data"
+            // }
+            // p { "Server data : {text}"}
+            p { "Todo data server: {todo_data:?}"}
+            // p { "Todo data client: {todo_data_resource:?}"}
         }
     }
 }
 
-#[server(PostServerData)]
-async fn post_server_data(data: String) -> Result<(), ServerFnError> {
-    tracing::info!("Server received: {}", data);
-    Ok(())
-}
+// #[server(PostServerData)]
+// async fn post_server_data(data: String) -> Result<(), ServerFnError> {
+//     tracing::info!("Server received: {}", data);
+//     Ok(())
+// }
 
-#[server(GetServerData)]
-async fn get_server_data() -> Result<String, ServerFnError> {
-    Ok("Hello from the server!".to_string())
-}
+// #[server(GetServerData)]
+// async fn get_server_data() -> Result<String, ServerFnError> {
+//     Ok("Hello from the server!".to_string())
+// }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Label {
@@ -92,8 +92,8 @@ pub struct TodoEntity {
     pub completed: bool,
     pub labels: Vec<Label>,
 }
-#[server(GetBlogData)]
-async fn get_blog_data() -> Result<Vec<TodoEntity>, ServerFnError> {
+#[server(GetTodoData)]
+async fn get_todo_data() -> Result<Vec<TodoEntity>, ServerFnError> {
     let todo = reqwest::get("データベースURL/todos")
         .await
         .unwrap()
