@@ -2,6 +2,7 @@
 
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Routable, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 enum Route {
@@ -78,11 +79,27 @@ async fn get_server_data() -> Result<String, ServerFnError> {
     Ok("Hello from the server!".to_string())
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Label {
+    pub id: i32,
+    pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TodoEntity {
+    pub id: i32,
+    pub text: String,
+    pub completed: bool,
+    pub labels: Vec<Label>,
+}
 #[server(GetBlogData)]
-async fn get_blog_data() -> Result<String, ServerFnError> {
-    Ok(reqwest::get("https://jsonplaceholder.typicode.com/posts/1")
+async fn get_blog_data() -> Result<Vec<TodoEntity>, ServerFnError> {
+    let todo = reqwest::get("データベースURL/todos")
         .await
         .unwrap()
-        .text()
-        .await.unwrap())
+        .json::<Vec<TodoEntity>>()
+        .await?;
+    tracing::info!("todo: {:?}", todo);
+
+    Ok(todo)
 }
