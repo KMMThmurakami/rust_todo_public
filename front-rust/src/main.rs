@@ -37,8 +37,9 @@ fn App() -> Element {
 fn Home() -> Element {
     // let mut count = use_signal(|| 0);
     // let mut text = use_signal(|| String::from("..."));
-    let todo_data = use_server_future(get_todo_data)?.value();     // SSR
     // let todo_data_resource = use_resource(get_todo_data).value();  // CSR
+    let todo_data = use_server_future(get_todo_data)?.value(); // SSR
+    let label_data = use_server_future(get_label_data)?.value(); // SSR
 
     rsx! {
         // Link {
@@ -63,6 +64,7 @@ fn Home() -> Element {
             // }
             // p { "Server data : {text}"}
             p { "Todo data server: {todo_data:?}"}
+            p { "Label data server: {label_data:?}"}
             // p { "Todo data client: {todo_data_resource:?}"}
         }
     }
@@ -92,6 +94,7 @@ pub struct TodoEntity {
     pub completed: bool,
     pub labels: Vec<Label>,
 }
+
 #[server(GetTodoData)]
 async fn get_todo_data() -> Result<Vec<TodoEntity>, ServerFnError> {
     let todo = reqwest::get("データベースURL/todos")
@@ -102,4 +105,16 @@ async fn get_todo_data() -> Result<Vec<TodoEntity>, ServerFnError> {
     tracing::info!("todo: {:?}", todo);
 
     Ok(todo)
+}
+
+#[server(GetLabelData)]
+async fn get_label_data() -> Result<Vec<Label>, ServerFnError> {
+    let label = reqwest::get("データベースURL/labels")
+        .await
+        .unwrap()
+        .json::<Vec<Label>>()
+        .await?;
+    tracing::info!("label: {:?}", label);
+
+    Ok(label)
 }
