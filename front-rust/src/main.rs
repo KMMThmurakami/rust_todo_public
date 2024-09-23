@@ -49,10 +49,23 @@ fn Home() -> Element {
         //     },
         //     "Go to blog"
         // }
+        h2 { "Label Post" }
+        form { onsubmit: move |event| {
+                tracing::info!("Submitted! {event:?}");
+                let input_name = event.values().get("name").unwrap().as_value();
+                wasm_bindgen_futures::spawn_local(async move { // Use `spawn_local` for async tasks in WASM
+                    if let Err(err) = post_label_data(input_name.clone()).await {
+                        tracing::error!("Failed to post data: {:?}", err);
+                    }
+                });
+            },
+            input { name: "name" }
+            input { r#type: "submit", value: "ADD LABEL" }
+        }
+        h2 { "Todo Post" }
         form { onsubmit: move |event| {
                 tracing::info!("Submitted! {event:?}");
                 let input_text = event.values().get("text").unwrap().as_value();
-                // ここで"データベースURL/todos"にpostをしたい json body text: input_text
                 wasm_bindgen_futures::spawn_local(async move { // Use `spawn_local` for async tasks in WASM
                     if let Err(err) = post_todo_data(input_text.clone()).await {
                         tracing::error!("Failed to post data: {:?}", err);
@@ -60,7 +73,7 @@ fn Home() -> Element {
                 });
             },
             input { name: "text" }
-            input { r#type: "submit", value: "SUBMIT" }
+            input { r#type: "submit", value: "ADD TODO" }
         }
         div {
             // h1 { "High-Five counter: {count}" }
@@ -116,6 +129,9 @@ fn Home() -> Element {
     }
 }
 
+// --------------
+// struct
+// --------------
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Label {
     pub id: i32,
@@ -130,6 +146,9 @@ pub struct TodoEntity {
     pub labels: Vec<Label>,
 }
 
+// --------------
+// todo function
+// --------------
 #[server(GetTodoData)]
 async fn get_todo_data() -> Result<Vec<TodoEntity>, ServerFnError> {
     let todo = reqwest::get("データベースURL/todos")
@@ -165,6 +184,9 @@ async fn post_todo_data(text: String) -> Result<(), ServerFnError> {
     Ok(())
 }
 
+// --------------
+// label function
+// --------------
 #[server(GetLabelData)]
 async fn get_label_data() -> Result<Vec<Label>, ServerFnError> {
     let label = reqwest::get("データベースURL/labels")
@@ -175,4 +197,26 @@ async fn get_label_data() -> Result<Vec<Label>, ServerFnError> {
     tracing::info!("label: {:?}", label);
 
     Ok(label)
+}
+
+async fn post_label_data(name: String) -> Result<(), ServerFnError> {
+    tracing::info!("post: {:?}", name);
+
+    let body = json!({
+        "name": name,
+    });
+
+    let client = reqwest::Client::new();
+    let res = client
+        .post("データベースURL/labels")
+        .json(&body)
+        .send()
+        .await;
+
+    match res {
+        Ok(response) => tracing::info!("POST successful: {:?}", response),
+        Err(err) => tracing::error!("POST failed: {:?}", err),
+    }
+
+    Ok(())
 }
