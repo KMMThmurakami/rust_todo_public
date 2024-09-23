@@ -53,7 +53,7 @@ fn Home() -> Element {
         //     },
         //     "Go to blog"
         // }
-        h2 { "Label Post" }
+        h2 { "Label Set" }
         form { onsubmit: move |event| {
                 tracing::info!("Submitted! {event:?}");
                 let input_name = event.values().get("name").unwrap().as_value();
@@ -66,7 +66,21 @@ fn Home() -> Element {
             input { name: "name" }
             input { r#type: "submit", value: "ADD LABEL" }
         }
-        h2 { "Todo Post" }
+        // h2 { "Label Delete" }
+        // p { "↓input label id" }
+        // form { onsubmit: move |event| {
+        //         tracing::info!("Submitted! {event:?}");
+        //         let delete_id = event.values().get("id").unwrap().as_value();
+        //         wasm_bindgen_futures::spawn_local(async move { // Use `spawn_local` for async tasks in WASM
+        //             if let Err(err) = delete_data("labels".to_string(), delete_id.parse().unwrap()).await {
+        //                 tracing::error!("Failed to post data: {:?}", err);
+        //             }
+        //         });
+        //     },
+        //     input { name: "id" }
+        //     input { r#type: "submit", value: "DELETE LABEL" }
+        // }
+        h2 { "Todo Set" }
         form { onsubmit: move |event| {
                 tracing::info!("Submitted! {event:?}");
                 let input_text = event.values().get("text").unwrap().as_value();
@@ -113,6 +127,20 @@ fn Home() -> Element {
             }
             input { r#type: "submit", value: "ADD TODO" }
         }
+        h2 { "Todo Delete" }
+        p { "↓input todo id" }
+        form { onsubmit: move |event| {
+                tracing::info!("Submitted! {event:?}");
+                let delete_id = event.values().get("id").unwrap().as_value();
+                wasm_bindgen_futures::spawn_local(async move { // Use `spawn_local` for async tasks in WASM
+                    if let Err(err) = delete_data("todos".to_string(), delete_id.parse().unwrap()).await {
+                        tracing::error!("Failed to post data: {:?}", err);
+                    }
+                });
+            },
+            input { name: "id" }
+            input { r#type: "submit", value: "DELETE TODO" }
+        }
         div {
             // h1 { "High-Five counter: {count}" }
             // button { onclick: move |_| count += 1, "Up high!" }
@@ -131,22 +159,23 @@ fn Home() -> Element {
             div {
                 h2 { "Label" }
                 if let Ok(ref data) = label_data {
-                    for (i, label) in data.iter().enumerate() {
-                        div { "{i}" }
+                    for label in data.iter() {
+                        div { "===============================" }
                         div {
                             p { "Label ID: {label.id}" }
                             p { "Label Name: {label.name}" }
                         }
                     }
+                    div { "===============================" }
                 } else {
                     div { "Labels Data get error" }
                 }
             }
             div {
                 h2 { "Todo" }
-                if let Ok(data) = todo_data {
-                    for (i, todo) in data.iter().enumerate() {
-                        div { "{i}" }
+                if let Ok(ref data) = todo_data {
+                    for todo in data.iter() {
+                        div { "===============================" }
                         div {
                             p { "Todo ID: {todo.id}" }
                             p { "Todo Text: {todo.text}" }
@@ -157,6 +186,7 @@ fn Home() -> Element {
                             }
                         }
                     }
+                    div { "===============================" }
                 } else {
                     div { "Todo Data get error" }
                 }
@@ -213,6 +243,23 @@ async fn post_todo_data(text: String, labels: Vec<Label>) -> Result<(), ServerFn
     let res = client
         .post("データベースURL/todos")
         .json(&body)
+        .send()
+        .await;
+
+    match res {
+        Ok(response) => tracing::info!("POST successful: {:?}", response),
+        Err(err) => tracing::error!("POST failed: {:?}", err),
+    }
+
+    Ok(())
+}
+
+async fn delete_data(kind: String, id: i32) -> Result<(), ServerFnError> {
+    tracing::info!("delete_todo_data: {:?}", id);
+
+    let client = reqwest::Client::new();
+    let res = client
+        .delete(format!("データベースURL/{}/{}", kind, id))
         .send()
         .await;
 
