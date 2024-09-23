@@ -38,8 +38,8 @@ fn Home() -> Element {
     // let mut count = use_signal(|| 0);
     // let mut text = use_signal(|| String::from("..."));
     // let todo_data_resource = use_resource(get_todo_data).value();  // CSR
-    let todo_data = use_server_future(get_todo_data)?.value(); // SSR
-    let label_data = use_server_future(get_label_data)?.value(); // SSR
+    let todo_data = use_server_future(get_todo_data)?.value().unwrap(); // SSR
+    let label_data = use_server_future(get_label_data)?.value().unwrap(); // SSR
 
     rsx! {
         // Link {
@@ -63,8 +63,40 @@ fn Home() -> Element {
             //     "Get Server Data"
             // }
             // p { "Server data : {text}"}
-            p { "Todo data server: {todo_data:?}"}
-            p { "Label data server: {label_data:?}"}
+            div {
+                h2 { "Label" }
+                if let Ok(data) = label_data {
+                    for (i, label) in data.iter().enumerate() {
+                        div { "{i+1}" }
+                        div {
+                            p { "Label ID: {label.id}" }
+                            p { "Label Name: {label.name}" }
+                        }
+                    }
+                } else {
+                    div { "Labels Data get error" }
+                }
+            }
+            div {
+                h2 { "Todo" }
+                if let Ok(data) = todo_data {
+                    for (i, todo) in data.iter().enumerate() {
+                        div { "{i+1}" }
+                        div {
+                            p { "Todo ID: {todo.id}" }
+                            p { "Todo Text: {todo.text}" }
+                            p { "Todo Completed: {todo.completed}" }
+                            for todo_label in todo.labels.iter() {
+                                p { "Todo Labels ID: {todo_label.id}" }
+                                p { "Todo Labels Name: {todo_label.name}" }
+                            }
+                        }
+                    }
+                } else {
+                    div { "Todo Data get error" }
+                }
+            }
+            // p { "Label data server: {label_data:?}"}
             // p { "Todo data client: {todo_data_resource:?}"}
         }
     }
@@ -81,13 +113,13 @@ fn Home() -> Element {
 //     Ok("Hello from the server!".to_string())
 // }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Label {
     pub id: i32,
     pub name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TodoEntity {
     pub id: i32,
     pub text: String,
