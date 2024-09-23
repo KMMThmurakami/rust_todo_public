@@ -3,6 +3,7 @@
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 #[derive(Clone, Routable, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 enum Route {
@@ -48,6 +49,19 @@ fn Home() -> Element {
         //     },
         //     "Go to blog"
         // }
+        form { onsubmit: move |event| {
+                tracing::info!("Submitted! {event:?}");
+                let input_text = event.values().get("text").unwrap().as_value();
+                // ここで"データベースURL/todos"にpostをしたい json body text: input_text
+                wasm_bindgen_futures::spawn_local(async move { // Use `spawn_local` for async tasks in WASM
+                    if let Err(err) = post_todo_data(input_text.clone()).await {
+                        tracing::error!("Failed to post data: {:?}", err);
+                    }
+                });
+            },
+            input { name: "text" }
+            input { r#type: "submit", value: "SUBMIT" }
+        }
         div {
             // h1 { "High-Five counter: {count}" }
             // button { onclick: move |_| count += 1, "Up high!" }
@@ -102,17 +116,6 @@ fn Home() -> Element {
     }
 }
 
-// #[server(PostServerData)]
-// async fn post_server_data(data: String) -> Result<(), ServerFnError> {
-//     tracing::info!("Server received: {}", data);
-//     Ok(())
-// }
-
-// #[server(GetServerData)]
-// async fn get_server_data() -> Result<String, ServerFnError> {
-//     Ok("Hello from the server!".to_string())
-// }
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Label {
     pub id: i32,
@@ -137,6 +140,29 @@ async fn get_todo_data() -> Result<Vec<TodoEntity>, ServerFnError> {
     tracing::info!("todo: {:?}", todo);
 
     Ok(todo)
+}
+
+async fn post_todo_data(text: String) -> Result<(), ServerFnError> {
+    tracing::info!("post: {:?}", text);
+
+    let body = json!({
+        "text": text,
+        "labels": [] // Use an empty array for labels
+    });
+
+    let client = reqwest::Client::new();
+    let res = client
+        .post("データベースURL/todos")
+        .json(&body)
+        .send()
+        .await;
+
+    match res {
+        Ok(response) => tracing::info!("POST successful: {:?}", response),
+        Err(err) => tracing::error!("POST failed: {:?}", err),
+    }
+
+    Ok(())
 }
 
 #[server(GetLabelData)]
