@@ -4,6 +4,7 @@ use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::str::FromStr;
 
 #[derive(Clone, Routable, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 enum Route {
@@ -41,6 +42,9 @@ fn Home() -> Element {
     // let todo_data_resource = use_resource(get_todo_data).value();  // CSR
     let todo_data = use_server_future(get_todo_data)?.value().unwrap(); // SSR
     let label_data = use_server_future(get_label_data)?.value().unwrap(); // SSR
+    tracing::info!("label_data: {:?}", type_of(&label_data));
+
+    let mut selected_labels = use_signal(Vec::<i32>::new);
 
     rsx! {
         // Link {
@@ -66,13 +70,47 @@ fn Home() -> Element {
         form { onsubmit: move |event| {
                 tracing::info!("Submitted! {event:?}");
                 let input_text = event.values().get("text").unwrap().as_value();
+
+                // Labelの初期選択状態を反映する
+                // 画面上のインデックスをVec型に変換
+                let selected_ids: Vec<i32> = selected_labels.read().clone();
+                // DBから取得したデータのインデックスと画面上のインデックスを対応させる
+                let selected_labels_data: Vec<Label> = selected_ids.iter()
+                    .filter_map(|&index| label_data.as_ref().ok()?.get(index as usize).cloned())
+                    .collect();
+                tracing::info!("selected_labels_data: {:?}", selected_labels_data);
+
                 wasm_bindgen_futures::spawn_local(async move { // Use `spawn_local` for async tasks in WASM
-                    if let Err(err) = post_todo_data(input_text.clone()).await {
+                    if let Err(err) = post_todo_data(input_text.clone(), selected_labels_data).await {
                         tracing::error!("Failed to post data: {:?}", err);
                     }
                 });
             },
             input { name: "text" }
+            // Generate checkboxes for labels
+            if let Ok(ref data) = label_data {
+                for (i, label) in data.iter().enumerate() {
+                    div {
+                        input {
+                            r#type: "checkbox",
+                            value: "{label.id}",
+                            onchange: move |event| {
+                                let bool = bool::from_str(&event.value()).unwrap();
+                                if bool {
+                                    // trueの場合、selected_labelsにlabel.idを追加
+                                    selected_labels.write().push(i as i32); // 本当は画面表示上のインデックスではなくてlabel.idを入れたい
+                                } else {
+                                    // falseの場合、selected_labelsからlabel.idを削除
+                                    selected_labels.write().retain(|&id| id != i as i32); // 本当は画面表示上のインデックスではなくてlabel.idを入れたい
+                                }
+                                tracing::info!("checked: {:?}", event.value());
+                                tracing::info!("selected_labels: {:?}", selected_labels);
+                            }
+                        }
+                        label { "{label.name}" }  // Display label name
+                    }
+                }
+            }
             input { r#type: "submit", value: "ADD TODO" }
         }
         div {
@@ -92,9 +130,9 @@ fn Home() -> Element {
             // p { "Server data : {text}"}
             div {
                 h2 { "Label" }
-                if let Ok(data) = label_data {
+                if let Ok(ref data) = label_data {
                     for (i, label) in data.iter().enumerate() {
-                        div { "{i+1}" }
+                        div { "{i}" }
                         div {
                             p { "Label ID: {label.id}" }
                             p { "Label Name: {label.name}" }
@@ -108,7 +146,7 @@ fn Home() -> Element {
                 h2 { "Todo" }
                 if let Ok(data) = todo_data {
                     for (i, todo) in data.iter().enumerate() {
-                        div { "{i+1}" }
+                        div { "{i}" }
                         div {
                             p { "Todo ID: {todo.id}" }
                             p { "Todo Text: {todo.text}" }
@@ -161,12 +199,14 @@ async fn get_todo_data() -> Result<Vec<TodoEntity>, ServerFnError> {
     Ok(todo)
 }
 
-async fn post_todo_data(text: String) -> Result<(), ServerFnError> {
-    tracing::info!("post: {:?}", text);
+async fn post_todo_data(text: String, labels: Vec<Label>) -> Result<(), ServerFnError> {
+    tracing::info!("post: {:?}, labels: {:?}", text, labels);
 
     let body = json!({
         "text": text,
-        "labels": [] // Use an empty array for labels
+        "labels": labels.iter().map(|label| {
+            json!(label.id)
+        }).collect::<Vec<_>>(), // 各ラベルをJSON形式に変換してPOST
     });
 
     let client = reqwest::Client::new();
@@ -219,4 +259,11 @@ async fn post_label_data(name: String) -> Result<(), ServerFnError> {
     }
 
     Ok(())
+}
+
+// --------------
+// debug function
+// --------------
+fn type_of<T>(_: &T) -> &'static str {
+    std::any::type_name::<T>()
 }
