@@ -70,6 +70,8 @@ fn create_app<Todo: TodoRepository, Label: LabelRepository>(
     let allowed_origins = vec![
         "http://localhost:3001".parse().unwrap(),
         "http://127.0.0.1:3001".parse().unwrap(),
+        "http://localhost:8080".parse().unwrap(),
+        "http://127.0.0.1:8080".parse().unwrap(),
         "フロントエンドURL".parse().unwrap(),
     ];
 
