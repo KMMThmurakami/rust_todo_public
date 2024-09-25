@@ -16,6 +16,7 @@ use repositories::{
     todo::{TodoRepository, TodoRepositoryForDb},
 };
 use shuttle_runtime::CustomError;
+use shuttle_runtime::SecretStore;
 use sqlx::PgPool;
 use std::{env, sync::Arc};
 use tower_http::cors::{AllowOrigin, Any, CorsLayer};
@@ -23,11 +24,16 @@ use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 // #[tokio::main]
 #[shuttle_runtime::main]
 // async fn main() {
-async fn axum(#[shuttle_shared_db::Postgres] pool: PgPool) -> shuttle_axum::ShuttleAxum {
+async fn axum(
+    #[shuttle_shared_db::Postgres] pool: PgPool,
+    #[shuttle_runtime::Secrets] secrets: SecretStore,
+) -> shuttle_axum::ShuttleAxum {
     // loggingの初期化
     // RUST_LOG=debug cargo run
     let log_level = env::var("RUST_LOG").unwrap_or("info".to_string());
     env::set_var("RUST_LOG", log_level);
+
+    let app_url = secrets.get("APP_URL").expect("undefined [APP_URL]");
 
     sqlx::migrate!()
         .run(&pool)
@@ -50,6 +56,7 @@ async fn axum(#[shuttle_shared_db::Postgres] pool: PgPool) -> shuttle_axum::Shut
     let app = create_app(
         TodoRepositoryForDb::new(pool.clone()),
         LabelRepositoryForDb::new(pool.clone()),
+        app_url,
     );
 
     // axum 0.4.8
@@ -66,13 +73,14 @@ async fn axum(#[shuttle_shared_db::Postgres] pool: PgPool) -> shuttle_axum::Shut
 fn create_app<Todo: TodoRepository, Label: LabelRepository>(
     todo_repository: Todo,
     label_repository: Label,
+    app_url: String,
 ) -> Router {
     let allowed_origins = vec![
         "http://localhost:3001".parse().unwrap(),
         "http://127.0.0.1:3001".parse().unwrap(),
         "http://localhost:8080".parse().unwrap(),
         "http://127.0.0.1:8080".parse().unwrap(),
-        "フロントエンドURL".parse().unwrap(),
+        app_url.parse().unwrap(),
     ];
 
     let cors = CorsLayer::new()
@@ -175,6 +183,7 @@ mod test {
         let res = create_app(
             TodoRepositoryForMemory::new(labels),
             LabelRepositoryForMemory::new(),
+            "url".to_string(),
         )
         .oneshot(req)
         .await
@@ -194,10 +203,14 @@ mod test {
             .await
             .expect("failed create todo");
         let req = build_todo_req_with_empty(Method::GET, "/todos/1");
-        let res = create_app(todo_repository, LabelRepositoryForMemory::new())
-            .oneshot(req)
-            .await
-            .unwrap();
+        let res = create_app(
+            todo_repository,
+            LabelRepositoryForMemory::new(),
+            "url".to_string(),
+        )
+        .oneshot(req)
+        .await
+        .unwrap();
         let todo = res_to_todo(res).await;
         assert_eq!(expected, todo);
     }
@@ -216,10 +229,14 @@ mod test {
             .await
             .expect("failed create todo");
         let req = build_todo_req_with_empty(Method::GET, "/todos");
-        let res = create_app(todo_repository, LabelRepositoryForMemory::new())
-            .oneshot(req)
-            .await
-            .unwrap();
+        let res = create_app(
+            todo_repository,
+            LabelRepositoryForMemory::new(),
+            "url".to_string(),
+        )
+        .oneshot(req)
+        .await
+        .unwrap();
         let bytes = to_bytes(res.into_body(), usize::MAX).await.unwrap();
         let body: String = String::from_utf8(bytes.to_vec()).unwrap();
         let todos: Vec<TodoEntity> = serde_json::from_str(&body).expect(&format!(
@@ -248,10 +265,14 @@ mod test {
             }"#
             .to_string(),
         );
-        let res = create_app(todo_repository, LabelRepositoryForMemory::new())
-            .oneshot(req)
-            .await
-            .unwrap();
+        let res = create_app(
+            todo_repository,
+            LabelRepositoryForMemory::new(),
+            "url".to_string(),
+        )
+        .oneshot(req)
+        .await
+        .unwrap();
         let todo = res_to_todo(res).await;
         assert_eq!(expected, todo);
     }
@@ -265,10 +286,14 @@ mod test {
             .await
             .expect("failed create todo");
         let req = build_todo_req_with_empty(Method::DELETE, "/todos/1");
-        let res = create_app(todo_repository, LabelRepositoryForMemory::new())
-            .oneshot(req)
-            .await
-            .unwrap();
+        let res = create_app(
+            todo_repository,
+            LabelRepositoryForMemory::new(),
+            "url".to_string(),
+        )
+        .oneshot(req)
+        .await
+        .unwrap();
         assert_eq!(StatusCode::NO_CONTENT, res.status());
     }
 
@@ -285,6 +310,7 @@ mod test {
         let res = create_app(
             TodoRepositoryForMemory::new(labels),
             LabelRepositoryForMemory::new(),
+            "url".to_string(),
         )
         .oneshot(req)
         .await
@@ -303,10 +329,14 @@ mod test {
             .expect("failed create label");
 
         let req = build_todo_req_with_empty(Method::GET, "/labels");
-        let res = create_app(TodoRepositoryForMemory::new(vec![label]), label_repository)
-            .oneshot(req)
-            .await
-            .unwrap();
+        let res = create_app(
+            TodoRepositoryForMemory::new(vec![label]),
+            label_repository,
+            "url".to_string(),
+        )
+        .oneshot(req)
+        .await
+        .unwrap();
         let bytes = to_bytes(res.into_body(), usize::MAX).await.unwrap();
         let body: String = String::from_utf8(bytes.to_vec()).unwrap();
         let labels: Vec<Label> = serde_json::from_str(&body).expect(&format!(
@@ -324,10 +354,14 @@ mod test {
             .await
             .expect("failed create label");
         let req = build_todo_req_with_empty(Method::DELETE, "/labels/1");
-        let res = create_app(TodoRepositoryForMemory::new(vec![label]), label_repository)
-            .oneshot(req)
-            .await
-            .unwrap();
+        let res = create_app(
+            TodoRepositoryForMemory::new(vec![label]),
+            label_repository,
+            "url".to_string(),
+        )
+        .oneshot(req)
+        .await
+        .unwrap();
         assert_eq!(StatusCode::NO_CONTENT, res.status());
     }
 }
