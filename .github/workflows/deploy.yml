@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  REQUEST_URL: ${{ secrets.REQUEST_URL }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -33,3 +36,4 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}

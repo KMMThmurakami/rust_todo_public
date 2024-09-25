@@ -1,7 +1,7 @@
 import type { NewTodoPayload, Todo, UpdateTodoPayload } from "../../types/todo";
 
 export const addTodoItem = async (payload: NewTodoPayload) => {
-  const res = await fetch("データベースURL/todos", {
+  const res = await fetch(import.meta.env.VITE_REQUEST_URL + "/todos", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -16,7 +16,7 @@ export const addTodoItem = async (payload: NewTodoPayload) => {
 };
 
 export const getTodoItems = async () => {
-  const res = await fetch("データベースURL/todos");
+  const res = await fetch(import.meta.env.VITE_REQUEST_URL + "/todos");
   if (!res.ok) {
     throw new Error("get todo request failed");
   }
@@ -26,7 +26,7 @@ export const getTodoItems = async () => {
 
 export const updateTodoItem = async (todo: UpdateTodoPayload) => {
   const { id, ...updateTodo } = todo;
-  const res = await fetch(`データベースURL/todos/${id}`, {
+  const res = await fetch(`${import.meta.env.VITE_REQUEST_URL}/todos/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -41,7 +41,7 @@ export const updateTodoItem = async (todo: UpdateTodoPayload) => {
 };
 
 export const deleteTodoItem = async (id: number) => {
-  const res = await fetch(`データベースURL/todos/${id}`, {
+  const res = await fetch(`${import.meta.env.VITE_REQUEST_URL}/todos/${id}`, {
     method: "DELETE",
   });
   if (!res.ok) {

@@ -1,7 +1,7 @@
 import type { Label, NewLabelPayload } from "../../types/todo";
 
 export const getLabelItems = async () => {
-  const res = await fetch("データベースURL/labels");
+  const res = await fetch(import.meta.env.VITE_REQUEST_URL + "/labels");
   if (!res.ok) {
     throw new Error("get label request failed");
   }
@@ -10,7 +10,7 @@ export const getLabelItems = async () => {
 };
 
 export const addLabelItem = async (payload: NewLabelPayload) => {
-  const res = await fetch("データベースURL/labels", {
+  const res = await fetch(import.meta.env.VITE_REQUEST_URL + "/labels", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -25,7 +25,7 @@ export const addLabelItem = async (payload: NewLabelPayload) => {
 };
 
 export const deleteLabelItem = async (id: number) => {
-  const res = await fetch(`データベースURL/labels/${id}`, {
+  const res = await fetch(`${import.meta.env.VITE_REQUEST_URL}/labels/${id}`, {
     method: "DELETE",
   });
   if (!res.ok) {
