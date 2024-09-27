@@ -17,7 +17,6 @@ wasm-bindgen-futures = "0.4"
 # Debug
 dioxus-logger = "0.5.1"
 reqwest = { version = "0.12.7", features = ["json"] }
-dotenv = "0.15.0"
 
 [features]
 default = []

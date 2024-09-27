@@ -5,8 +5,6 @@ use dioxus_logger::tracing;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::str::FromStr;
-use dotenv::dotenv;
-use std::env;
 
 #[derive(Clone, Routable, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 enum Route {
@@ -221,9 +219,7 @@ pub struct TodoEntity {
 // --------------
 #[server(GetTodoData)]
 async fn get_todo_data() -> Result<Vec<TodoEntity>, ServerFnError> {
-    dotenv().ok();
-    let request_url = &env::var("REQUEST_URL").expect("undefined [REQUEST_URL]");
-    let todo = reqwest::get(format!("{request_url}/todos"))
+    let todo = reqwest::get("データベースURL/todos")
         .await
         .unwrap()
         .json::<Vec<TodoEntity>>()
@@ -244,10 +240,8 @@ async fn post_todo_data(text: String, labels: Vec<Label>) -> Result<(), ServerFn
     });
 
     let client = reqwest::Client::new();
-    dotenv().ok();
-    let request_url = &env::var("REQUEST_URL").expect("undefined [REQUEST_URL]");
     let res = client
-        .post(format!("{request_url}/todos"))
+        .post("データベースURL/todos")
         .json(&body)
         .send()
         .await;
@@ -264,10 +258,8 @@ async fn delete_data(kind: String, id: i32) -> Result<(), ServerFnError> {
     tracing::info!("delete_todo_data: {:?}", id);
 
     let client = reqwest::Client::new();
-    dotenv().ok();
-    let request_url = &env::var("REQUEST_URL").expect("undefined [REQUEST_URL]");
     let res = client
-        .delete(format!("{request_url}/{}/{}", kind, id))
+        .delete(format!("データベースURL/{}/{}", kind, id))
         .send()
         .await;
 
@@ -284,9 +276,7 @@ async fn delete_data(kind: String, id: i32) -> Result<(), ServerFnError> {
 // --------------
 #[server(GetLabelData)]
 async fn get_label_data() -> Result<Vec<Label>, ServerFnError> {
-    dotenv().ok();
-    let request_url = &env::var("REQUEST_URL").expect("undefined [REQUEST_URL]");
-    let label = reqwest::get(format!("{request_url}/labels"))
+    let label = reqwest::get("データベースURL/labels")
         .await
         .unwrap()
         .json::<Vec<Label>>()
@@ -304,10 +294,8 @@ async fn post_label_data(name: String) -> Result<(), ServerFnError> {
     });
 
     let client = reqwest::Client::new();
-    dotenv().ok();
-    let request_url = &env::var("REQUEST_URL").expect("undefined [REQUEST_URL]");
     let res = client
-        .post(format!("{request_url}/labels"))
+        .post("データベースURL/labels")
         .json(&body)
         .send()
         .await;
